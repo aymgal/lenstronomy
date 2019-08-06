@@ -6,6 +6,7 @@ from lenstronomy.Sampling.Likelihoods.image_likelihood import ImageLikelihood
 from lenstronomy.Sampling.Likelihoods.position_likelihood import PositionLikelihood
 from lenstronomy.Sampling.Likelihoods.flux_ratio_likelihood import FluxRatioLikelihood
 from lenstronomy.Sampling.Likelihoods.prior_likelihood import PriorLikelihood
+from lenstronomy.Sampling.Likelihoods.kinematics_likelihood import KinematicsLikelihood
 import lenstronomy.Util.class_creator as class_reator
 
 
@@ -19,10 +20,10 @@ class LikelihoodModule(object):
 
     Additional arguments are supported for adding a time-delay likelihood etc (see __init__ definition)
     """
-    def __init__(self, kwargs_data_joint, kwargs_model, param_class, image_likelihood=True, check_bounds=True, check_solver=False,
+    def __init__(self, kwargs_data_joint, kwargs_model, param_class, kinematics_lookup_class=None, image_likelihood=True, check_bounds=True, check_solver=False,
                  astrometric_likelihood=False, position_uncertainty=0.004, check_positive_flux=False,
                  solver_tolerance=0.001, force_no_add_image=False, source_marg=False, restrict_image_number=False,
-                 max_num_images=None, bands_compute=None, time_delay_likelihood=False,
+                 max_num_images=None, bands_compute=None, time_delay_likelihood=False, kinematics_likelihood=False,
                  force_minimum_source_surface_brightness=False, flux_min=0, image_likelihood_mask_list=None,
                  flux_ratio_likelihood=False, kwargs_flux_compute={}, prior_lens=[], prior_source=[],
                  prior_lens_light=[], prior_ps=[], prior_cosmo=[], condition_definition=None):
@@ -58,7 +59,10 @@ class LikelihoodModule(object):
         :param condition_definition: a definition taking as arguments (kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps, kwargs_cosmo)
         and returns a logL (punishing) value.
         """
-        multi_band_list, image_type, time_delays_measured, time_delays_uncertainties, flux_ratios, flux_ratio_errors = self._unpack_data(**kwargs_data_joint)
+        multi_band_list, image_type, time_delays_measured, time_delays_uncertainties, \
+            flux_ratios, flux_ratio_errors, vel_disp_measured, vel_disp_uncertainties \
+            = self._unpack_data(**kwargs_data_joint)
+        
         if len(multi_band_list) == 0:
             image_likelihood = False
 
@@ -88,12 +92,22 @@ class LikelihoodModule(object):
         if self._flux_ratio_likelihood is True:
             self.flux_ratio_likelihood = FluxRatioLikelihood(lens_model_class, flux_ratios, flux_ratio_errors,
                                                              **self._kwargs_flux_compute)
+        self._kinematics_likelihood = kinematics_likelihood
+        if self._kinematics_likelihood is True:
+            if kinematics_lookup_class is None:
+                raise ValueError("Lookup table class is required for kinematics likelihood")
+            if not kinematics_lookup_class.is_built:
+                kinematics_lookup_class.build_lookup_table()
+            self.kinematics_likelihood = KinematicsLikelihood(multi_band_list, kwargs_model, 
+                                                              vel_disp_measured, vel_disp_uncertainties,
+                                                              kinematics_lookup_class)
         self._check_positive_flux = check_positive_flux
         self._check_bounds = check_bounds
         self._condition_definition = condition_definition
 
     def _unpack_data(self, multi_band_list=[], multi_band_type='multi-linear', time_delays_measured=None,
-                     time_delays_uncertainties=None, flux_ratios=None, flux_ratio_errors=None):
+                     time_delays_uncertainties=None, flux_ratios=None, flux_ratio_errors=None,
+                     vel_disp_measured=None, vel_disp_uncertainties=None):
         """
 
         :param multi_band_list: list of [[kwargs_data, kwargs_psf, kwargs_numerics], [], ...]
@@ -104,7 +118,8 @@ class LikelihoodModule(object):
         :param flux_ratio_errors: error in flux ratio measurement
         :return:
         """
-        return multi_band_list, multi_band_type, time_delays_measured, time_delays_uncertainties, flux_ratios, flux_ratio_errors
+        return (multi_band_list, multi_band_type, time_delays_measured, time_delays_uncertainties, 
+                flux_ratios, flux_ratio_errors, vel_disp_measured, vel_disp_uncertainties)
 
     def _reset_point_source_cache(self, bool=True):
         self.PointSource.delete_lens_model_cache()
@@ -150,6 +165,11 @@ class LikelihoodModule(object):
             logL += logL_flux_ratios
             if verbose is True:
                 print('time-delay logL = %s' % logL_flux_ratios)
+        if self._kinematics_likelihood is True:
+            logL_vel_disp = self.kinematics_likelihood.logL(kwargs_lens, kwargs_lens_light, kwargs_cosmo)
+            logL += logL_vel_disp
+            if verbose is True:
+                print('velocity dispersion logL = %s' % logL_vel_disp)
         logL += self._position_likelihood.logL(kwargs_lens, kwargs_ps, kwargs_cosmo, verbose=verbose)
         logL_prior = self._prior_likelihood.logL(kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps, kwargs_cosmo)
         logL += logL_prior

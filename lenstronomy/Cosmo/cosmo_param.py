@@ -5,11 +5,12 @@ class CosmoParam(object):
     class that handles the cosmology relevant parameters
     """
 
-    def __init__(self, Ddt_sampling=False, mass_scaling=False, num_scale_factor=1, kwargs_fixed={}, kwargs_lower=None,
+    def __init__(self, Ddt_sampling=False, Dd_sampling=False, mass_scaling=False, num_scale_factor=1, kwargs_fixed={}, kwargs_lower=None,
                  kwargs_upper=None, point_source_offset=False, source_size=False, num_images=0):
         """
 
         :param Ddt_sampling: bool, if True, samples the time-delay distance D_dt (in units of Mpc)
+        :param Dd_sampling: bool, if True, samples the deflector distance D_d (in units of Mpc)
         :param mass_scaling: bool, if True, samples a mass scaling factor between different profiles
         :param num_scale_factor: int, number of independent mass scaling factors being sampled
         :param kwargs_fixed: keyword arguments, fixed parameters during sampling
@@ -22,6 +23,7 @@ class CosmoParam(object):
         """
 
         self._D_dt_sampling = Ddt_sampling
+        self._D_d_sampling = Dd_sampling
         self._mass_scaling = mass_scaling
         self._num_scale_factor = num_scale_factor
         self._point_source_offset = point_source_offset
@@ -32,6 +34,8 @@ class CosmoParam(object):
             kwargs_lower = {}
             if self._D_dt_sampling is True:
                 kwargs_lower['D_dt'] = 0
+            if self._D_d_sampling is True:
+                kwargs_lower['D_d'] = 0
             if self._mass_scaling is True:
                 kwargs_lower['scale_factor'] = [0] * self._num_scale_factor
             if self._point_source_offset is True:
@@ -43,6 +47,8 @@ class CosmoParam(object):
             kwargs_upper = {}
             if self._D_dt_sampling is True:
                 kwargs_upper['D_dt'] = 100000
+            if self._D_d_sampling is True:
+                kwargs_upper['D_d'] = 100000
             if self._mass_scaling is True:
                 kwargs_upper['scale_factor'] = [1000] * self._num_scale_factor
             if self._point_source_offset is True:
@@ -67,6 +73,12 @@ class CosmoParam(object):
                 i += 1
             else:
                 kwargs_cosmo['D_dt'] = self._kwargs_fixed['D_dt']
+        if self._D_d_sampling is True:
+            if 'D_d' not in self._kwargs_fixed:
+                kwargs_cosmo['D_d'] = args[i]
+                i += 1
+            else:
+                kwargs_cosmo['D_d'] = self._kwargs_fixed['D_d']
         if self._mass_scaling is True:
             if 'scale_factor' not in self._kwargs_fixed:
                 kwargs_cosmo['scale_factor'] = args[i: i + self._num_scale_factor]
@@ -102,6 +114,9 @@ class CosmoParam(object):
         if self._D_dt_sampling is True:
             if 'D_dt' not in self._kwargs_fixed:
                 args.append(kwargs_cosmo['D_dt'])
+        if self._D_d_sampling is True:
+            if 'D_d' not in self._kwargs_fixed:
+                args.append(kwargs_cosmo['D_d'])
         if self._mass_scaling is True:
             if 'scale_factor' not in self._kwargs_fixed:
                 for i in range(self._num_scale_factor):
@@ -129,6 +144,10 @@ class CosmoParam(object):
             if 'D_dt' not in self._kwargs_fixed:
                 num += 1
                 list.append('D_dt')
+        if self._D_d_sampling is True:
+            if 'D_d' not in self._kwargs_fixed:
+                num += 1
+                list.append('D_d')
         if self._mass_scaling is True:
             if 'scale_factor' not in self._kwargs_fixed:
                 num += self._num_scale_factor
