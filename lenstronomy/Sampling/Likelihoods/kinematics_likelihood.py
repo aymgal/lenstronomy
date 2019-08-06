@@ -22,7 +22,7 @@ class KinematicsLikelihood(object):
         self.imageData0 = ImageData(**kwargs_data0)
         self._num_pix = self.imageData0.num_pixel_axes[0]  # assume square image
         self._delta_pix = self.imageData0.pixel_width
-        self._analysis = LensAnalysis(kwargs_model)
+        self._half_light_radius = LensAnalysis(kwargs_model).half_light_radius_lens
         self._lookup = lookup_table_class
 
 
@@ -42,7 +42,7 @@ class KinematicsLikelihood(object):
 
 
     def half_light_radius(self, kwargs_lens_light, center_x, center_y, model_bool_list=None):
-        return self._analysis.half_light_radius_lens(kwargs_lens_light, self._delta_pix, self._num_pix, 
+        return self._half_light_radius_lens(kwargs_lens_light, self._delta_pix, self._num_pix, 
                 center_x=center_x, center_y=center_y, model_bool_list=model_bool_list)
 
 
@@ -61,11 +61,10 @@ class KinematicsLikelihood(object):
         theta_E = kwargs_lens[0]['theta_E']
         r_eff = self._r_eff(kwargs_lens_light)
         vel_disp0 = self._lookup.velocity_dispersion_interp(gamma, theta_E, r_eff)
-        D_d0  = self._lookup.cosmo.D_d
         D_s0  = self._lookup.cosmo.D_s
         D_ds0 = self._lookup.cosmo.D_ds
         z_d = self._lookup.cosmo.z_lens
-        return D_dt / (1 + z_d) * vel_disp0 * D_ds0 / (D_d0 * D_s0)
+        return D_dt / (1 + z_d) / D_d * vel_disp0 / (D_s0/D_ds0)
 
 
     def _r_eff(self, kwargs_lens_light):
