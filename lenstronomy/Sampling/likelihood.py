@@ -96,8 +96,6 @@ class LikelihoodModule(object):
         if self._kinematics_likelihood is True:
             if kinematics_lookup_class is None:
                 raise ValueError("Lookup table class is required for kinematics likelihood")
-            if not kinematics_lookup_class.is_built:
-                kinematics_lookup_class.build_lookup_table()
             self.kinematics_likelihood = KinematicsLikelihood(multi_band_list, kwargs_model, 
                                                               vel_disp_measured, vel_disp_uncertainties,
                                                               kinematics_lookup_class)
