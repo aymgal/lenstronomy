@@ -66,7 +66,7 @@ class Param(object):
                  joint_source_with_source=[], joint_lens_with_light=[], joint_source_with_point_source=[],
                  joint_lens_light_with_point_source=[], joint_extinction_with_lens_light=[],
                  joint_lens_with_source_light=[], mass_scaling_list=None, point_source_offset=False,
-                 num_point_source_list=None, image_plane_source_list=None, solver_type='NONE', Ddt_sampling=None,
+                 num_point_source_list=None, image_plane_source_list=None, solver_type='NONE', Ddt_sampling=None, Dd_sampling=None,
                  source_size=False, num_tau0=0):
         """
 
@@ -177,7 +177,7 @@ class Param(object):
         self.extinctionParams = LightParam(self._optical_depth_model_list, kwargs_fixed_extinction_updated,
                                            kwargs_lower=kwargs_lower_extinction, kwargs_upper=kwargs_upper_extinction,
                                            linear_solver=False)
-        self.specialParams = SpecialParam(Ddt_sampling=Ddt_sampling, mass_scaling=self._mass_scaling,
+        self.specialParams = SpecialParam(Ddt_sampling=Ddt_sampling, Dd_sampling=Dd_sampling, mass_scaling=self._mass_scaling,
                                           kwargs_fixed=kwargs_fixed_special, num_scale_factor=self._num_scale_factor,
                                           kwargs_lower=kwargs_lower_special, kwargs_upper=kwargs_upper_special,
                                           point_source_offset=self._point_source_offset, num_images=self._num_images,
@@ -187,7 +187,6 @@ class Param(object):
             if i_source in self._image_plane_source_list:
                 raise ValueError("linking a source light model with a lens model AND simultaneously parameterizing the"
                                  " source position in the image plane is not valid!")
-
 
     @property
     def num_point_source_images(self):
