@@ -188,7 +188,7 @@ class LensProp(object):
                 kwargs_light.append(kwargs_lens_light_i)
         if Hernquist_approx is True:
             light_profile_list = ['HERNQUIST']
-            kwargs_light = [{'Rs': r_eff, 'amp': 1.}]
+            kwargs_light = [{'Rs': r_eff * 0.551, 'amp': 1.}]
         else:
             if MGE_light is True:
                 lightModel = LightModel(light_profile_list)
