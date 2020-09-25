@@ -28,6 +28,7 @@ class MultiLinear(MultiDataBase):
         :param kwargs_model: model option keyword arguments
         :param likelihood_mask_list: list of likelihood masks (booleans with size of the individual images
         :param compute_bool: (optinal), bool list to indicate which band to be included in the modeling
+        :param kwargs_pixelbased: keyword arguments with various settings related to the pixel-based solver (see SLITronomy documentation)
         """
         self.type = 'multi-linear'
         imageModel_list = []

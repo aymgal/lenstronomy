@@ -18,7 +18,7 @@ class MultiBandImageReconstruction(object):
     """
 
     def __init__(self, multi_band_list, kwargs_model, kwargs_params, multi_band_type='multi-linear',
-                 kwargs_likelihood=None, kwargs_pixelbased=None):
+                 print_likelihood_value=True, kwargs_likelihood=None, kwargs_pixelbased=None):
         """
 
         :param multi_band_list: list of imaging data configuration [[kwargs_data, kwargs_psf, kwargs_numerics], [...]]
@@ -28,7 +28,10 @@ class MultiBandImageReconstruction(object):
             - 'multi-linear': linear amplitudes are inferred on single data set
             - 'linear-joint': linear amplitudes ae jointly inferred
             - 'single-band': single band
+        :param print_likelihood_value: if True (default), computes and prints total likelihood (runs the linear inversion a second time).
+        This can deactivated for for speedup purposes.
         :param kwargs_likelihood: likelihood keyword arguments as supported by the Likelihood() class
+        :param kwargs_pixelbased: keyword arguments with various settings related to the pixel-based solver (see SLITronomy documentation)
         """
         # here we retrieve those settings in the likelihood keyword arguments that are relevant for the image reconstruction
         if kwargs_likelihood is None:
@@ -49,11 +52,12 @@ class MultiBandImageReconstruction(object):
         # here we perform the (joint) linear inversion with all data
         model, error_map, cov_param, param = self._imageModel.image_linear_solve(inv_bool=True, **kwargs_params)
         check_solver_error(param)
-        logL = self._imageModel.likelihood_data_given_model(source_marg=source_marg, linear_prior=linear_prior, **kwargs_params)
 
-        n_data = self._imageModel.num_data_evaluate
-        if n_data > 0:
-            print(logL * 2 / n_data, 'reduced X^2 of all evaluated imaging data combined.')
+        if print_likelihood_value:
+            logL = self._imageModel.likelihood_data_given_model(source_marg=source_marg, linear_prior=linear_prior, **kwargs_params)
+            n_data = self._imageModel.num_data_evaluate
+            if n_data > 0:
+                print(logL * 2 / n_data, 'reduced X^2 of all evaluated imaging data combined.')
 
         self.model_band_list = []
         self._index_list = []
