@@ -162,8 +162,11 @@ def create_im_sim(multi_band_list, multi_band_type, kwargs_model, bands_compute=
 
     if multi_band_type == 'multi-linear':
         from lenstronomy.ImSim.MultiBand.multi_linear import MultiLinear
-        multiband = MultiLinear(multi_band_list, kwargs_model, compute_bool=bands_compute, likelihood_mask_list=likelihood_mask_list)
+        multiband = MultiLinear(multi_band_list, kwargs_model, compute_bool=bands_compute, likelihood_mask_list=likelihood_mask_list,
+                                kwargs_pixelbased=kwargs_pixelbased)
     elif multi_band_type == 'joint-linear':
+        if kwargs_pixelbased is not None:
+            raise ValueError("Pixel-based modelling is not supported in 'joint-linear' mode")
         from lenstronomy.ImSim.MultiBand.joint_linear import JointLinear
         multiband = JointLinear(multi_band_list, kwargs_model, compute_bool=bands_compute, likelihood_mask_list=likelihood_mask_list)
     elif multi_band_type == 'single-band':

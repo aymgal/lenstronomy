@@ -54,6 +54,9 @@ class SingleBandMultiModel(ImageLinearFit):
                                                    [None for i in range(len(multi_band_list))])
         self._index_optical_depth = index_optical_depth[band_index]
 
+        if kwargs_pixelbased is not None:
+            kwargs_pixelbased = self._check_pixelbased_multiband(band_index, kwargs_pixelbased)
+
         super(SingleBandMultiModel, self).__init__(data_i, psf_i, lens_model_class, source_model_class,
                                                    lens_light_model_class, point_source_class, extinction_class,
                                                    kwargs_numerics=kwargs_numerics, likelihood_mask=likelihood_mask_list[band_index],
@@ -189,3 +192,24 @@ class SingleBandMultiModel(ImageLinearFit):
         else:
             kwargs_extinction_i = [kwargs_extinction[k] for k in self._index_optical_depth]
         return kwargs_lens_i, kwargs_source_i, kwargs_lens_light_i, kwargs_ps_i, kwargs_extinction_i
+
+    def _check_pixelbased_multiband(self, band_index, kwargs_pixelbased_mb):
+        """
+        Some settings for the pixel-based solver can be provided as list.
+        This function selects the right settings for the chosen band, and returns the uptated (single-band) kwargs_pixelbased.
+        """
+        import copy
+        kwargs_pixelbased = copy.deepcopy(kwargs_pixelbased_mb)
+        supersampling_factor_source_list = kwargs_pixelbased.pop('supersampling_factor_source_list', None)
+        if supersampling_factor_source_list is not None:
+            kwargs_pixelbased['supersampling_factor_source'] = supersampling_factor_source_list[band_index]
+        min_num_pix_source_list = kwargs_pixelbased.pop('min_num_pix_source_list', None)
+        if min_num_pix_source_list is not None:
+            kwargs_pixelbased['min_num_pix_source'] = min_num_pix_source_list[band_index]
+        min_threshold_list = kwargs_pixelbased.pop('min_threshold_list', None)
+        if min_threshold_list is not None:
+            kwargs_pixelbased['min_threshold'] = min_threshold_list[band_index]
+        threshold_increment_high_freq_list = kwargs_pixelbased.pop('threshold_increment_high_freq_list', None)
+        if threshold_increment_high_freq_list is not None:
+            kwargs_pixelbased['threshold_increment_high_freq'] = threshold_increment_high_freq_list[band_index]
+        return kwargs_pixelbased
