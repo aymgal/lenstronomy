@@ -28,8 +28,8 @@ class MultiBandImageReconstruction(object):
             - 'multi-linear': linear amplitudes are inferred on single data set
             - 'linear-joint': linear amplitudes ae jointly inferred
             - 'single-band': single band
-        :param print_likelihood_value: if True (default), computes and prints total likelihood (runs the linear inversion a second time).
-        This can deactivated for for speedup purposes.
+        :param print_likelihood_value: if True (default), computes and prints the total log-likelihood.
+        This can deactivated for speedup purposes (does not run linear inversion again), and reduces verbosity
         :param kwargs_likelihood: likelihood keyword arguments as supported by the Likelihood() class
         :param kwargs_pixelbased: keyword arguments with various settings related to the pixel-based solver (see SLITronomy documentation)
         """
