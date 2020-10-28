@@ -4,6 +4,10 @@ __author__ = 'sibirrer'
 
 import numpy as np
 from lenstronomy.Util.util import convert_bool_list
+
+__all__ = ['LightModelBase']
+
+
 _MODELS_SUPPORTED = ['GAUSSIAN', 'GAUSSIAN_ELLIPSE', 'ELLIPSOID', 'MULTI_GAUSSIAN', 'MULTI_GAUSSIAN_ELLIPSE',
                      'SERSIC', 'SERSIC_ELLIPSE', 'CORE_SERSIC', 'SHAPELETS', 'SHAPELETS_POLAR', 'SHAPELETS_POLAR_EXP',
                      'HERNQUIST', 'HERNQUIST_ELLIPSE', 'PJAFFE', 'PJAFFE_ELLIPSE', 'UNIFORM', 'POWER_LAW', 'NIE',
@@ -141,7 +145,8 @@ class LightModelBase(object):
     def total_flux(self, kwargs_list, norm=False, k=None):
         """
         Computes the total flux of each individual light profile. This allows to estimate the total flux as
-        well as lenstronomy amp to magnitude conversions. Not all models are supported
+        well as lenstronomy amp to magnitude conversions. Not all models are supported.
+        The units are linked to the data to be modelled with associated noise properties (default is count/s).
 
         :param kwargs_list: list of keyword arguments corresponding to the light profiles. The 'amp' parameter can be missing.
         :param norm: bool, if True, computes the flux for amp=1

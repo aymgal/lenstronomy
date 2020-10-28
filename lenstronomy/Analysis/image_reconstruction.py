@@ -4,7 +4,11 @@ import numpy as np
 import lenstronomy.Util.class_creator as class_creator
 from lenstronomy.ImSim.MultiBand.single_band_multi_model import SingleBandMultiModel
 
+from lenstronomy.Util.package_util import exporter
+export, __all__ = exporter()
 
+
+@export
 class MultiBandImageReconstruction(object):
     """
     this class manages the output/results of a fitting process and can conveniently access image reconstruction
@@ -60,26 +64,22 @@ class MultiBandImageReconstruction(object):
                 print(logL * 2 / n_data, 'reduced X^2 of all evaluated imaging data combined.')
 
         self.model_band_list = []
-        self._index_list = []
-        index = 0
         for i in range(len(multi_band_list)):
             if bands_compute[i] is True:
                 if multi_band_type == 'joint-linear':
                     param_i = param
                     cov_param_i = cov_param
                 else:
-                    param_i = param[index]
-                    cov_param_i = cov_param[index]
+                    param_i = param[i]
+                    cov_param_i = cov_param[i]
 
-                model_band = ModelBand(multi_band_list, kwargs_model, model[index], error_map[index], cov_param_i,
+                model_band = ModelBand(multi_band_list, kwargs_model, model[i], error_map[i], cov_param_i,
                                        param_i, copy.deepcopy(kwargs_params),
                                        image_likelihood_mask_list=image_likelihood_mask_list, band_index=i,
                                        verbose=verbose)
                 self.model_band_list.append(model_band)
-                self._index_list.append(index)
             else:
-                self._index_list.append(-1)
-            index += 1
+                self.model_band_list.append(None)
 
     def band_setup(self, band_index=0):
         """
@@ -89,13 +89,13 @@ class MultiBandImageReconstruction(object):
         :param band_index: integer (>=0) of imaging band in order of multi_band_list input to this class
         :return: ImageModel() instance and keyword arguments of the model
         """
-        i = self._index_list[band_index]
-        if i == -1:
-            raise ValueError("band %s is not computed or out of range." % band_index)
-        i = int(i)
+        i = int(band_index)
+        if self.model_band_list[i] is None:
+            raise ValueError("band %s is not computed or out of range." % i)
         return self.model_band_list[i].image_model_class, self.model_band_list[i].kwargs_model
 
 
+@export
 class ModelBand(object):
     """
     class to plot a single band given the full modeling results
@@ -160,6 +160,7 @@ class ModelBand(object):
         return kwargs_return
 
 
+@export
 def check_solver_error(image):
     """
 

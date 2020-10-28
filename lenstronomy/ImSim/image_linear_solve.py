@@ -4,6 +4,8 @@ from lenstronomy.Util import util
 import numpy as np
 import functools
 
+__all__ = ['ImageLinearFit']
+
 
 class ImageLinearFit(ImageModel):
     """
