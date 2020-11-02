@@ -49,10 +49,12 @@ class ImageLinearFit(ImageModel):
         if self._pixelbased_bool is True:
             # update the pixel-based solver with the likelihood mask
             self.PixelSolver.set_likelihood_mask(self.likelihood_mask)
-            # add the function that carries out linear inversion of point source amplitudes
             if len(self.PointSource.point_source_type_list) > 0:
+                # add the function that carries out linear inversion of point source amplitudes
                 ps_solver_func = functools.partial(self._image_linear_solve, point_source_only=True)
                 self.PixelSolver.set_point_source_solver_func(ps_solver_func)
+                # pass the function that computes PSF error maps
+                self.PixelSolver.set_point_source_error_func(self.error_map_psf)
 
     def image_linear_solve(self, kwargs_lens=None, kwargs_source=None, kwargs_lens_light=None, kwargs_ps=None,
                            kwargs_extinction=None, kwargs_special=None, inv_bool=False):
@@ -408,11 +410,22 @@ class ImageLinearFit(ImageModel):
         grid2d = util.array2image(grid1d, nx, ny)
         return grid2d
 
+    def error_map_psf(self, kwargs_lens, kwargs_ps, kwargs_special=None):
+        """
+        returns the map containing error terms due to point sources
+        :param kwargs_lens:
+        :param kwargs_ps:
+        :param kwargs_special:
+        :return: 2d array
+        """
+        return self._error_map_psf(kwargs_lens, kwargs_ps, kwargs_special=None)
+
     def _error_map_psf(self, kwargs_lens, kwargs_ps, kwargs_special=None):
         """
 
         :param kwargs_lens:
         :param kwargs_ps:
+        :param kwargs_special:
         :return:
         """
         error_map = np.zeros((self.Data.num_pixel_axes))
