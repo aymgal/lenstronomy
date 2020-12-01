@@ -49,12 +49,9 @@ class ImageLinearFit(ImageModel):
         if self._pixelbased_bool is True:
             # update the pixel-based solver with the likelihood mask
             self.PixelSolver.set_likelihood_mask(self.likelihood_mask)
-            if len(self.PointSource.point_source_type_list) > 0:
-                # add the function that carries out linear inversion of point source amplitudes
-                ps_solver_func = functools.partial(self._image_linear_solve, point_source_only=True)
-                self.PixelSolver.set_point_source_solver_func(ps_solver_func)
-                # pass the function that computes PSF error maps
-                self.PixelSolver.set_point_source_error_func(self.error_map_psf)
+            # add the function that carries out linear inversion of point source amplitudes
+            ps_solver_func = functools.partial(self._image_linear_solve, point_source_only=True)
+            self.PixelSolver.set_point_source_solver_func(ps_solver_func)
 
     def image_linear_solve(self, kwargs_lens=None, kwargs_source=None, kwargs_lens_light=None, kwargs_ps=None,
                            kwargs_extinction=None, kwargs_special=None, inv_bool=False):
@@ -125,12 +122,15 @@ class ImageLinearFit(ImageModel):
         :param init_lens_light_model: optional initial guess for the lens surface brightness
         :return: 2d array of surface brightness pixels of the optimal solution of the linear parameters to match the data
         """
+        # get the additional error terms (e.g. point sources)
         _, model_error = self._error_response(kwargs_lens, kwargs_ps, kwargs_special=kwargs_special)
-        init_ps_model = self.point_source(kwargs_ps)  # generate image of point source model
+        # generate image of point source model
+        init_ps_model = self.point_source(kwargs_ps, kwargs_lens=kwargs_lens, kwargs_special=kwargs_special)
+        # call the sparse solver (SLITronomy)
         model, param, _ = self.PixelSolver.solve(kwargs_lens, kwargs_source, kwargs_lens_light=kwargs_lens_light,
                                                  kwargs_ps=kwargs_ps, kwargs_special=kwargs_special,
                                                  init_lens_light_model=init_lens_light_model,
-                                                 init_ps_model=init_ps_model)
+                                                 init_ps_model=init_ps_model, ps_error_map=model_error)
         cov_param = None
         _, _ = self.update_pixel_kwargs(kwargs_source, kwargs_lens_light)
         _, _, _, _ = self.update_linear_kwargs(param, kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps)
