@@ -125,12 +125,16 @@ class ImageLinearFit(ImageModel):
         # get the additional error terms (e.g. point sources)
         _, model_error = self._error_response(kwargs_lens, kwargs_ps, kwargs_special=kwargs_special)
         # generate image of point source model
-        init_ps_model = self.point_source(kwargs_ps, kwargs_lens=kwargs_lens, kwargs_special=kwargs_special)
+        init_ps_model = self.point_source(kwargs_ps, kwargs_lens=kwargs_lens, kwargs_special=kwargs_special,
+                                          unconvolved=False, k=None)
+        # also get the flattened list of point source amplitudes
+        _, _, init_ps_amp = self.PointSource.point_source_list(kwargs_ps, kwargs_lens=kwargs_lens, k=None)
         # call the sparse solver (SLITronomy)
         model, param, _ = self.PixelSolver.solve(kwargs_lens, kwargs_source, kwargs_lens_light=kwargs_lens_light,
                                                  kwargs_ps=kwargs_ps, kwargs_special=kwargs_special,
                                                  init_lens_light_model=init_lens_light_model,
-                                                 init_ps_model=init_ps_model, ps_error_map=model_error)
+                                                 init_ps_model=init_ps_model, init_ps_amp=init_ps_amp, 
+                                                 ps_error_map=model_error)
         cov_param = None
         _, _ = self.update_pixel_kwargs(kwargs_source, kwargs_lens_light)
         _, _, _, _ = self.update_linear_kwargs(param, kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps)
