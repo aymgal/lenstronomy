@@ -57,7 +57,7 @@ class SingleBandMultiModel(ImageLinearFit):
         self._index_optical_depth = index_optical_depth[band_index]
 
         if kwargs_pixelbased is not None:
-            kwargs_pixelbased = self._check_pixelbased_multiband(band_index, kwargs_pixelbased)
+            kwargs_pixelbased = self._pixelbased_to_singleband(band_index, kwargs_pixelbased)
 
         super(SingleBandMultiModel, self).__init__(data_i, psf_i, lens_model_class, source_model_class,
                                                    lens_light_model_class, point_source_class, extinction_class,
@@ -195,7 +195,7 @@ class SingleBandMultiModel(ImageLinearFit):
             kwargs_extinction_i = [kwargs_extinction[k] for k in self._index_optical_depth]
         return kwargs_lens_i, kwargs_source_i, kwargs_lens_light_i, kwargs_ps_i, kwargs_extinction_i
 
-    def _check_pixelbased_multiband(self, band_index, kwargs_pixelbased_mb):
+    def _pixelbased_to_singleband(self, band_index, kwargs_pixelbased_mb):
         """
         Some settings for the pixel-based solver can be provided as list.
         This function selects the right settings for the chosen band, and returns the uptated (single-band) kwargs_pixelbased.
