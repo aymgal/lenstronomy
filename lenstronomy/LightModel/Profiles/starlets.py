@@ -23,8 +23,8 @@ class SLIT_Starlets(object):
     lower_limit_default = {'amp': [0], 'n_scales': 2, 'n_pixels': 5, 'center_x': -1000, 'center_y': -1000, 'scale': 0.000000001}
     upper_limit_default = {'amp': [1e8], 'n_scales': 20, 'n_pixels': 1e10, 'center_x': 1000, 'center_y': 1000, 'scale': 10000000000}
 
-    def __init__(self, thread_count=1, fast_inverse=True, second_gen=False, show_pysap_plots=False, 
-                 force_no_pysap=False):
+    def __init__(self, thread_count=1, backend='pysap', fast_inverse=True, second_gen=False, 
+                 show_pysap_plots=False, force_no_backend=False):
         """
         Load pySAP package if found, and initialize the Starlet transform.
 
@@ -33,14 +33,40 @@ class SLIT_Starlets(object):
         :param second_gen: if True, uses the second generation of starlet transform 
         :param show_pysap_plots: if True, displays pySAP plots when calling the decomposition method
         :param force_no_pysap: if True, does not load pySAP and computes starlet transforms in python.
-        """        
-        self.use_pysap, pysap = self._load_pysap(force_no_pysap)
-        if self.use_pysap:
-            self._transf_class = pysap.load_transform('BsplineWaveletTransformATrousAlgorithm')
+        """
+        if force_no_backend is True:
+            self._backend = None
         else:
-            warnings.warn("The python package pySAP is not used for starlet operations. "
-                          "They will be performed using (slower) python routines.")
-        self._fast_inverse = fast_inverse
+            self._backend = backend.lower()
+
+        if self._backend == 'pysparse':
+            try:
+                import pysparse
+            except ImportError as e:
+                warnings.warn("The pysparse module from pySAP is not used for starlet operations (error during import: {}). "
+                              .format(e) + "They will be performed using (slower) python routines.")
+                self._backend = None
+            else:
+                self._class = pysparse.MRStarlet
+        elif self._backend == 'pysap':
+            if second_gen is True:
+                raise ValueError("Second generation starlet transform not supported by pySAP (set use_pysparse=True to use it)")
+            try:
+                import pysap
+            except ImportError as e:
+                warnings.warn("The pysap module from pySAP is not used for starlet operations (error during import: {}). "
+                              .format(e) + "They will be performed using (slower) python routines.")
+                self._backend = None
+            else:
+                self._class = pysap.load_transform('BsplineWaveletTransformATrousAlgorithm')
+        else:
+            self._class = None
+
+        if second_gen is False:
+            self._fast_inverse = fast_inverse
+        else:
+            self._fast_inverse = False
+
         self._second_gen = second_gen
         self._show_pysap_plots = show_pysap_plots
         self.interpol = Interpol()
@@ -78,7 +104,7 @@ class SLIT_Starlets(object):
         :param n_scales: number of decomposition scales
         :return: reconstructed signal as 2D array of shape (sqrt(n_pixels), sqrt(n_pixels))
         """
-        if self.use_pysap and not self._second_gen:
+        if self._backend is not None:
             return self._inverse_transform(coeffs, n_scales, n_pixels)
         else:
             return starlets_util.inverse_transform(coeffs, fast=self._fast_inverse, 
@@ -108,68 +134,79 @@ class SLIT_Starlets(object):
         :param n_scales: number of decomposition scales
         :return: reconstructed signal as 2D array of shape (n_scales, sqrt(n_pixels), sqrt(n_pixels))
         """
-        if self.use_pysap and not self._second_gen:
+        if self._backend is not None:
             coeffs = self._transform(image, n_scales)
         else:
             coeffs = starlets_util.transform(image, n_scales, second_gen=self._second_gen)
         return coeffs
 
-    def _inverse_transform(self, coeffs, n_scales, n_pixels):
-        """reconstructs image from starlet coefficients"""
-        self._check_transform_pysap(n_scales, n_pixels)
-        if self._fast_inverse and not self._second_gen:
+    def _inverse_transform(self, coeffs, num_scales, num_pixels):
+        if self._fast_inverse:
             # for 1st gen starlet the reconstruction can be performed by summing all scales 
-            image = np.sum(coeffs, axis=0)
+            return np.sum(coeffs, axis=0)
+        self._prepare_transform(num_scales, num_pixels)
+        coeffs = self._array2list(coeffs)
+        if self._backend == 'pysparse':
+            return self._inverse_transform_pysparse(coeffs, num_scales)
         else:
-            coeffs = self._coeffs2pysap(coeffs)
-            self._transf.analysis_data = coeffs
-            result = self._transf.synthesis()
-            if self._show_pysap_plots:
-                result.show()
-            image = result.data
+            return self._inverse_transform_pysap(coeffs, num_scales)
+
+    def _inverse_transform_pysparse(self, coeffs, num_scales):
+        image = self._transf.recon(coeffs, adjoint=False)
         return image
 
-    def _transform(self, image, n_scales):
+    def _inverse_transform_pysap(self, coeffs, num_scales):
+        """reconstructs image from starlet coefficients"""
+        self._transf.analysis_data = coeffs
+        result = self._transf.synthesis()
+        if self._show_pysap_plots:
+            result.show()
+        image = result.data
+        return image
+
+    def _transform(self, image, num_scales):
+        self._prepare_transform(num_scales, image.size)
+        if self._backend == 'pysparse':
+            coeffs = self._transform_pysparse(image, num_scales)
+        else:
+            coeffs = self._transform_pysap(image, num_scales)
+        coeffs = self._list2array(coeffs)
+        return coeffs
+
+    def _transform_pysparse(self, image, num_scales):
+        coeffs = self._transf.transform(image, num_scales)
+        return coeffs
+
+    def _transform_pysap(self, image, num_scales):
         """decomposes an image into starlets coefficients"""
-        self._check_transform_pysap(n_scales, image.size)
         self._transf.data = image
         self._transf.analysis()
         if self._show_pysap_plots:
             self._transf.show()
         coeffs = self._transf.analysis_data
-        coeffs = self._pysap2coeffs(coeffs)
         return coeffs
 
-    def _check_transform_pysap(self, n_scales, n_pixels):
+    def _prepare_transform(self, num_scales, num_pixels):
         """if needed, update the loaded pySAP transform to correct number of scales"""
-        if not hasattr(self, '_transf') or n_scales != self._n_scales or n_pixels != self._n_pixels:
-            self._transf = self._transf_class(nb_scale=n_scales, verbose=False, 
-                                              nb_procs=self.thread_count)
-            self._n_scales = n_scales
-            self._n_pixels = n_pixels
+        if not hasattr(self, '_transf') or num_scales != self._num_scales or num_pixels != self._num_pixels:
+            if self._backend == 'pysparse':
+                self._transf = self._class(bord=0, gen2=self._second_gen, verbose=False,
+                                           nb_procs=self.thread_count)
+            else:
+                self._transf = self._class(nb_scale=num_scales, verbose=False, 
+                                           nb_procs=self.thread_count)
+            self._num_scales = num_scales
+            self._num_pixels = num_pixels
 
-    def _pysap2coeffs(self, coeffs):
+    @staticmethod
+    def _list2array(coeffs):
         """convert pySAP decomposition coefficients to numpy array"""
         return np.asarray(coeffs)
 
-    def _coeffs2pysap(self, coeffs):
+    @staticmethod
+    def _array2list(coeffs):
         """convert coefficients stored in numpy array to list required by pySAP"""
         coeffs_list = []
         for i in range(coeffs.shape[0]):
             coeffs_list.append(coeffs[i, :, :])
         return coeffs_list
-
-    def _load_pysap(self, force_no_pysap):
-        """load pySAP module"""
-        if force_no_pysap:
-            return False, None
-        try:
-            import pysap
-        except ImportError:
-            return False, None
-        else:
-            return True, pysap
-
-    def delete_cache(self):
-        """delete the cached interpolated image"""
-        self.interpol.delete_cache()

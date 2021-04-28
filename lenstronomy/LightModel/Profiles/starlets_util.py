@@ -30,7 +30,7 @@ def transform(img, n_scales, second_gen=False):
     n = np.size(h)
     h = np.array(h)
     
-    max_lvl = np.min( (lvl, int(np.log2(n2))) )
+    max_lvl = int(np.log2(min(n1, n2)))
     if lvl > max_lvl:
         raise ValueError("Maximum decomposition level is {} (required: {})".format(max_lvl, lvl))
     elif lvl <= 0:
