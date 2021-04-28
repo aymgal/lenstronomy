@@ -1,3 +1,4 @@
+import copy
 from lenstronomy.ImSim.image_linear_solve import ImageLinearFit
 from lenstronomy.Data.imaging_data import ImageData
 from lenstronomy.Data.psf import PSF
@@ -57,7 +58,7 @@ class SingleBandMultiModel(ImageLinearFit):
         self._index_optical_depth = index_optical_depth[band_index]
 
         if kwargs_pixelbased is not None:
-            kwargs_pixelbased = self._pixelbased_to_singleband(band_index, kwargs_pixelbased)
+            kwargs_pixelbased = self._kwargs_pixelbased_to_singleband(band_index, kwargs_pixelbased)
 
         super(SingleBandMultiModel, self).__init__(data_i, psf_i, lens_model_class, source_model_class,
                                                    lens_light_model_class, point_source_class, extinction_class,
@@ -195,23 +196,38 @@ class SingleBandMultiModel(ImageLinearFit):
             kwargs_extinction_i = [kwargs_extinction[k] for k in self._index_optical_depth]
         return kwargs_lens_i, kwargs_source_i, kwargs_lens_light_i, kwargs_ps_i, kwargs_extinction_i
 
-    def _pixelbased_to_singleband(self, band_index, kwargs_pixelbased_mb):
+    def _kwargs_pixelbased_to_singleband(self, band_index, kwargs_pixelbased_mb):
         """
         Some settings for the pixel-based solver can be provided as list.
         This function selects the right settings for the chosen band, and returns the uptated (single-band) kwargs_pixelbased.
         """
-        import copy
         kwargs_pixelbased = copy.deepcopy(kwargs_pixelbased_mb)
+        # supersampling factor
         supersampling_factor_source_list = kwargs_pixelbased.pop('supersampling_factor_source_list', None)
         if supersampling_factor_source_list is not None:
             kwargs_pixelbased['supersampling_factor_source'] = supersampling_factor_source_list[band_index]
+        # minimal source plane size
         min_num_pix_source_list = kwargs_pixelbased.pop('min_num_pix_source_list', None)
         if min_num_pix_source_list is not None:
             kwargs_pixelbased['min_num_pix_source'] = min_num_pix_source_list[band_index]
+        # minimal threshold in noise units
         min_threshold_list = kwargs_pixelbased.pop('min_threshold_list', None)
         if min_threshold_list is not None:
             kwargs_pixelbased['min_threshold'] = min_threshold_list[band_index]
+        # threshold increment for high frequencies
         threshold_increment_high_freq_list = kwargs_pixelbased.pop('threshold_increment_high_freq_list', None)
         if threshold_increment_high_freq_list is not None:
             kwargs_pixelbased['threshold_increment_high_freq'] = threshold_increment_high_freq_list[band_index]
+        # filtering point source regions
+        filter_point_source_residuals_list = kwargs_pixelbased.pop('filter_point_source_residuals_list', None)
+        if filter_point_source_residuals_list is not None:
+            kwargs_pixelbased['filter_point_source_residuals'] = filter_point_source_residuals_list[band_index]
+        # minimal starlet scale to keep in point source regions
+        min_scale_point_source_residuals_list = kwargs_pixelbased.pop('min_scale_point_source_residuals_list', None)
+        if min_scale_point_source_residuals_list is not None:
+            kwargs_pixelbased['min_scale_point_source_residuals'] = min_scale_point_source_residuals_list[band_index]
+        # radius of masked regions for point source filtering
+        radius_point_source_residuals_list = kwargs_pixelbased.pop('radius_point_source_residuals_list', None)
+        if radius_point_source_residuals_list is not None:
+            kwargs_pixelbased['radius_point_source_residuals'] = radius_point_source_residuals_list[band_index]
         return kwargs_pixelbased

@@ -235,6 +235,13 @@ class SubgridKernelConvolution(object):
             image_resized_conv += self._low_res_conv.convolution2d(image_low_res)
         return image_resized_conv
 
+    def copy_transpose(self):
+        """
+        
+        :return: copy of the class with kernel set to the transpose of original one
+        """
+        raise NotImplementedError("Copy of SubgridKernelConvolution with transposed PSF kernel is not supported")
+
 
 @export
 class MultiGaussianConvolution(object):
@@ -309,6 +316,13 @@ class MultiGaussianConvolution(object):
         kernel = util.array2image(kernel)
         return kernel / np.sum(kernel)
 
+    def copy_transpose(self):
+        """
+        
+        :return: copy of the class with kernel set to the transpose of original one
+        """
+        raise NotImplementedError("Copy of MultiGaussianConvolution with transposed PSF kernel is not supported")
+
 
 @export
 class FWHMGaussianConvolution(object):
@@ -335,6 +349,13 @@ class FWHMGaussianConvolution(object):
 
         image_conv = ndimage.filters.gaussian_filter(image, self._sigma, mode='nearest', truncate=self._truncation)
         return image_conv
+
+    def copy_transpose(self):
+        """
+        
+        :return: copy of the class with kernel set to the transpose of original one
+        """
+        raise NotImplementedError("Copy of FWHMGaussianConvolution with transposed PSF kernel is not supported")
 
 
 @export
@@ -371,3 +392,10 @@ class MGEConvolution(object):
         """
         kernel_mge = self._mge_conv.pixel_kernel(num_pix=len(self._kernel))
         return self._kernel - kernel_mge
+
+    def copy_transpose(self):
+        """
+        
+        :return: copy of the class with kernel set to the transpose of original one
+        """
+        raise NotImplementedError("Copy of MGEConvolution with transposed PSF kernel is not supported")
