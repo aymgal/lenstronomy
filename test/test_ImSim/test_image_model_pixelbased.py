@@ -21,7 +21,7 @@ from lenstronomy.Util import util
 from lenstronomy.LightModel.Profiles.starlets import SLIT_Starlets
 
 
-_force_no_pysap = True  # if issues on Travis-CI to install pysap, force use python-only functions
+_force_no_backend = True  # if issues on Travis-CI to install pysap, force use python-only functions
 
 
 class TestImageModel(object):
@@ -82,14 +82,14 @@ class TestImageModel(object):
         # create a starlet light distributions
         n_scales = 6
         source_map = imageModel_base.source_surface_brightness(kwargs_source_base, de_lensed=True, unconvolved=True)
-        starlets_class = SLIT_Starlets(force_no_pysap=_force_no_pysap)
+        starlets_class = SLIT_Starlets(force_no_backend=_force_no_backend)
         source_map_starlets = starlets_class.decomposition_2d(source_map, n_scales)
-        self.kwargs_source = [{'amp': source_map_starlets, 'n_scales': n_scales, 'n_pixels': numPix, 'scale': deltaPix, 'center_x': 0, 'center_y': 0}]
+        self.kwargs_source = [{'amp': source_map_starlets, 'n_scales': n_scales, 'n_pix_x': numPix, 'n_pix_y': numPix, 'scale': deltaPix, 'center_x': 0, 'center_y': 0}]
         source_model_class = LightModel(light_model_list=['SLIT_STARLETS'])
         lens_light_map = imageModel_base.lens_surface_brightness(kwargs_lens_light_base, unconvolved=True)
-        starlets_class = SLIT_Starlets(force_no_pysap=_force_no_pysap, second_gen=True)
+        starlets_class = SLIT_Starlets(force_no_backend=_force_no_backend, second_gen=True)
         lens_light_starlets = starlets_class.decomposition_2d(lens_light_map, n_scales)
-        self.kwargs_lens_light = [{'amp': lens_light_starlets, 'n_scales': n_scales, 'n_pixels': numPix, 'scale': deltaPix, 'center_x': 0, 'center_y': 0}]
+        self.kwargs_lens_light = [{'amp': lens_light_starlets, 'n_scales': n_scales, 'n_pix_x': numPix, 'n_pix_y': numPix, 'scale': deltaPix, 'center_x': 0, 'center_y': 0}]
         lens_light_model_class = LightModel(light_model_list=['SLIT_STARLETS_GEN2'])
 
         kwargs_numerics = {'supersampling_factor': 1}
@@ -271,14 +271,14 @@ class TestRaise(unittest.TestCase):
         # create a starlet light distributions
         n_scales = 6
         source_map = imageModel_base.source_surface_brightness(kwargs_source_base, de_lensed=True, unconvolved=True)
-        starlets_class = SLIT_Starlets(force_no_pysap=_force_no_pysap)
+        starlets_class = SLIT_Starlets(force_no_backend=_force_no_backend)
         source_map_starlets = starlets_class.decomposition_2d(source_map, n_scales)
-        self.kwargs_source = [{'amp': source_map_starlets, 'n_scales': n_scales, 'n_pixels': numPix, 'scale': deltaPix, 'center_x': 0, 'center_y': 0}]
+        self.kwargs_source = [{'amp': source_map_starlets, 'n_scales': n_scales, 'n_pix_x': numPix, 'n_pix_y': numPix, 'scale': deltaPix, 'center_x': 0, 'center_y': 0}]
         self.source_model_class = LightModel(light_model_list=['SLIT_STARLETS'])
         lens_light_map = imageModel_base.lens_surface_brightness(kwargs_lens_light_base, unconvolved=True)
-        starlets_class = SLIT_Starlets(force_no_pysap=_force_no_pysap, second_gen=True)
+        starlets_class = SLIT_Starlets(force_no_backend=_force_no_backend, second_gen=True)
         lens_light_starlets = starlets_class.decomposition_2d(lens_light_map, n_scales)
-        self.kwargs_lens_light = [{'amp': lens_light_starlets, 'n_scales': n_scales, 'n_pixels': numPix, 'scale': deltaPix, 'center_x': 0, 'center_y': 0}]
+        self.kwargs_lens_light = [{'amp': lens_light_starlets, 'n_scales': n_scales, 'n_pix_x': numPix, 'n_pix_y': numPix, 'scale': deltaPix, 'center_x': 0, 'center_y': 0}]
         self.lens_light_model_class = LightModel(light_model_list=['SLIT_STARLETS_GEN2'])
 
         self.kwargs_numerics = {'supersampling_factor': 1}
