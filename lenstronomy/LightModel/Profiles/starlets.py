@@ -23,7 +23,7 @@ class SLIT_Starlets(object):
     lower_limit_default = {'amp': [0], 'n_scales': 2, 'n_pixels': 5, 'center_x': -1000, 'center_y': -1000, 'scale': 0.000000001}
     upper_limit_default = {'amp': [1e8], 'n_scales': 20, 'n_pixels': 1e10, 'center_x': 1000, 'center_y': 1000, 'scale': 10000000000}
 
-    def __init__(self, thread_count=1, backend='pysap', fast_inverse=True, second_gen=False, 
+    def __init__(self, thread_count=1, backend='pysparse', fast_inverse=True, second_gen=False, 
                  show_pysap_plots=False, force_no_backend=False):
         """
         Load pySAP package if found, and initialize the Starlet transform.
@@ -35,6 +35,7 @@ class SLIT_Starlets(object):
         :param force_no_pysap: if True, does not load pySAP and computes starlet transforms in python.
         """
         if force_no_backend is True:
+            warnings.warn("The pySAP package is not used for starlet operations (forced).")
             self._backend = None
         else:
             self._backend = backend.lower()
@@ -210,3 +211,7 @@ class SLIT_Starlets(object):
         for i in range(coeffs.shape[0]):
             coeffs_list.append(coeffs[i, :, :])
         return coeffs_list
+
+    def delete_cache(self):
+        """delete the cached interpolated image"""
+        self.interpol.delete_cache()

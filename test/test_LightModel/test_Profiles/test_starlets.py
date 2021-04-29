@@ -9,7 +9,7 @@ from lenstronomy.LightModel.Profiles.starlets import SLIT_Starlets
 from lenstronomy.Util import util
 
 
-_force_no_pysap = True  # if issues on Travis-CI to install pysap, force use python-only functions
+_force_no_backend = True  # if issues on Travis-CI to install pysap, force use python-only functions
 
 
 class TestSLITStarlets(object):
@@ -18,9 +18,9 @@ class TestSLITStarlets(object):
     """
     def setup(self):
         # different versions of Starlet transforms
-        self.starlets = SLIT_Starlets(fast_inverse=False, second_gen=False, force_no_pysap=_force_no_pysap)
-        self.starlets_fast = SLIT_Starlets(fast_inverse=True, second_gen=False, force_no_pysap=_force_no_pysap)
-        self.starlets_2nd = SLIT_Starlets(second_gen=True, force_no_pysap=_force_no_pysap)
+        self.starlets = SLIT_Starlets(fast_inverse=False, second_gen=False, force_no_backend=_force_no_backend)
+        self.starlets_fast = SLIT_Starlets(fast_inverse=True, second_gen=False, force_no_backend=_force_no_backend)
+        self.starlets_2nd = SLIT_Starlets(second_gen=True, force_no_backend=_force_no_backend)
 
         # define a test image with gaussian components
         self.num_pix = 50
@@ -128,20 +128,20 @@ class TestSLITStarlets(object):
         self.starlets_fast.delete_cache()
         assert not hasattr(self.starlets_fast.interpol, '_image_interp')
 
-    def test_coeffs2pysap(self):
+    def test_array2list(self):
         n_scales = 3
         num_pix = 20
         coeffs = np.ones((n_scales, num_pix, num_pix))
-        pysap_list = self.starlets._coeffs2pysap(coeffs)
+        pysap_list = self.starlets._array2list(coeffs)
         assert len(pysap_list) == n_scales
         for i in range(n_scales):
             assert pysap_list[i].shape == coeffs[i].shape
 
-    def test_pysap2coeffs(self):
+    def test_list2array(self):
         n_scales = 3
         num_pix = 20
         pysap_list = n_scales * [np.ones((num_pix, num_pix))]
-        coeffs = self.starlets._pysap2coeffs(pysap_list)
+        coeffs = self.starlets._list2array(pysap_list)
         assert coeffs.shape == (n_scales, num_pix, num_pix)
         for i in range(n_scales):
             assert pysap_list[i].shape == coeffs[i].shape
@@ -150,7 +150,7 @@ class TestRaise(unittest.TestCase):
     def test_raise(self):
         with self.assertRaises(ValueError):
             # try to set decomposition scale to higher than maximal value
-            starlets = SLIT_Starlets(force_no_pysap=True)
+            starlets = SLIT_Starlets(force_no_backend=True)
             # define a test image with gaussian components
             num_pix = 50
             x, y = util.make_grid(num_pix, 1)
@@ -164,7 +164,7 @@ class TestRaise(unittest.TestCase):
             _ = starlets.decomposition_2d(test_image, n_scales)
         with self.assertRaises(ValueError):
             # try to set decomposition scale to negative value
-            starlets = SLIT_Starlets(force_no_pysap=True)
+            starlets = SLIT_Starlets(force_no_backend=True)
             # define a test image with gaussian components
             num_pix = 50
             x, y = util.make_grid(num_pix, 1)
