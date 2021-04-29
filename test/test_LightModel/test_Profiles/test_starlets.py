@@ -24,9 +24,9 @@ class TestSLITStarlets(object):
 
         # define a test image with gaussian components
         self.n_scales = 3
-        self.n_pix_x = 50
-        self.n_pix_y = 40  # testint non-square images at the same time
-        _, _, ra_at_xy_0, dec_at_xy_0, _, _, Mpix2coord, _ = util.make_grid_with_coordtransform(50, 1)
+        self.n_pix_x = 40
+        self.n_pix_y = 50  # testing non-square images at the same time
+        _, _, ra_at_xy_0, dec_at_xy_0, _, _, Mpix2coord, _ = util.make_grid_with_coordtransform(self.n_pix_x, 1)
         self.x, self.y = util.grid_from_coordinate_transform(self.n_pix_x, self.n_pix_y, Mpix2coord, ra_at_xy_0, dec_at_xy_0)
 
         # build a non-trivial positive image from sum of gaussians

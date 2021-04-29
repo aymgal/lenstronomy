@@ -341,14 +341,19 @@ class ImageLinearFit(ImageModel):
         """
         # in case the source plane grid size has changed, update the kwargs accordingly
         ss_factor_source = self.SourceNumerics.grid_supersampling_factor
-        kwargs_source[0]['n_pixels'] = int(self.Data.num_pixel * ss_factor_source**2)  # effective number of pixels in source plane
-        kwargs_source[0]['scale'] = self.Data.pixel_width / ss_factor_source        # effective pixel size of source plane grid
+        nx, ny = self.Data.num_pixel_axes
+        # effective number of pixels in source plane grid along each axis
+        kwargs_source[0]['n_pix_x'] = nx * ss_factor_source
+        kwargs_source[0]['n_pix_y'] = ny * ss_factor_source
+        # effective pixel size of source plane grid
+        kwargs_source[0]['scale'] = self.Data.pixel_width / ss_factor_source
         # pixelated reconstructions have no well-defined center, we put it arbitrarily at (0, 0), center of the image
         kwargs_source[0]['center_x'] = 0
         kwargs_source[0]['center_y'] = 0
         # do the same if the lens light has been reconstructed
         if kwargs_lens_light is not None and len(kwargs_lens_light) > 0:
-            kwargs_lens_light[0]['n_pixels'] = self.Data.num_pixel
+            kwargs_lens_light[0]['n_pix_x'] = nx
+            kwargs_lens_light[0]['n_pix_y'] = ny
             kwargs_lens_light[0]['scale'] = self.Data.pixel_width
             kwargs_lens_light[0]['center_x'] = 0
             kwargs_lens_light[0]['center_y'] = 0

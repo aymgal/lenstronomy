@@ -79,10 +79,11 @@ class SLIT_Starlets(object):
         Follows lenstronomy conventions for light profiles.
 
         :param amp: decomposition coefficients ('amp' to follow conventions in other light profile)
-        This is an ndarray with shape (n_scales, sqrt(n_pixels), sqrt(n_pixels)) or (n_scales*n_pixels,)
+        This is an ndarray with shape (n_scales, n_pix_x, n_pix_x) or (n_scales*n_pix_x*n_pix_y,)
         :param n_scales: number of decomposition scales
-        :param n_pixels: number of pixels in a single scale
-        :return: reconstructed signal as 1D array of shape (n_pixels,)
+        :param n_pix_x: number of pixels in dimension x
+        :param n_pix_y: number of pixels in dimension y
+        :return: reconstructed signal as 1D array of shape (n_pix_x*n_pix_y,)
         """
         if len(amp.shape) == 1:
             coeffs = util.array2cube(amp, n_scales, n_pix_x, n_pix_y)
@@ -115,9 +116,9 @@ class SLIT_Starlets(object):
         """
         1D starlet transform from starlet coefficients stored in coeffs
 
-        :param image: 2D image to be decomposed, ndarray with shape (sqrt(n_pixels), sqrt(n_pixels))
+        :param image: 2D image to be decomposed, ndarray with shape (n_pix_x, n_pix_y)
         :param n_scales: number of decomposition scales
-        :return: reconstructed signal as 1D array of shape (n_scales*n_pixels,)
+        :return: reconstructed signal as 1D array of shape (n_scales*n_pix_x*n_pix_y,)
         """
         if len(image.shape) == 1:
             image_2d = util.array2image(image, nx=n_pix_x, ny=n_pix_y)
@@ -131,9 +132,9 @@ class SLIT_Starlets(object):
         """
         2D starlet transform from starlet coefficients stored in coeffs
 
-        :param image: 2D image to be decomposed, ndarray with shape (sqrt(n_pixels), sqrt(n_pixels))
+        :param image: 2D image to be decomposed, ndarray with shape (n_pix_x, n_pix_y)
         :param n_scales: number of decomposition scales
-        :return: reconstructed signal as 2D array of shape (n_scales, sqrt(n_pixels), sqrt(n_pixels))
+        :return: reconstructed signal as 2D array of shape (n_scales, n_pix_x, n_pix_y)
         """
         if self._backend is not None:
             coeffs = self._transform(image, n_scales)

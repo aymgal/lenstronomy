@@ -31,7 +31,7 @@ class TestParam(object):
             {'amp': 1},  # 'UNIFORM'
             {'amp': [1], 'beta': 1, 'n_max': 0, 'center_x': 0, 'center_y': 0},  # 'SHAPELETS'
             {'amp': [1], 'beta': 1, 'n_max': 0, 'center_x': 0, 'center_y': 0},  # 'SHAPELETS_POLAR_EXP'
-            {'amp': np.ones((3*20**2,)), 'n_scales': 3, 'n_pixels': 20**2, 'scale': 0.05, 'center_x': 0, 'center_y': 0},  # 'SLIT_STARLETS'
+            {'amp': np.ones((3*20**2,)), 'n_scales': 3, 'n_pix_x': 20, 'n_pix_y': 20, 'scale': 0.05, 'center_x': 0, 'center_y': 0},  # 'SLIT_STARLETS'
         ]
         # self.kwargs_sigma = [
         #     {'amp_sigma': 1., 'sigma_sigma': 1, 'center_x_sigma': 0, 'center_y_sigma': 0},
@@ -52,11 +52,11 @@ class TestParam(object):
         # ]
         self.kwargs_fixed = [
             {}, {'sigma': [1, 3]}, {}, {}, {}, {'n_max': 1}, {}, {}, {}, {}, {}, {'n_max': 0}, {'n_max': 0}, 
-            {'n_scales': 3, 'n_pixels': 20**2, 'scale': 0.05, 'center_x': 0, 'center_y': 0},
+            {'n_scales': 3, 'n_pix_x': 20, 'n_pix_y': 20, 'scale': 0.05, 'center_x': 0, 'center_y': 0},
         ]
         self.kwargs_fixed_linear = [
             {}, {'sigma': [1, 3]}, {}, {}, {}, {'n_max': 1}, {}, {}, {}, {}, {}, {}, {},
-            {'n_scales': 3, 'n_pixels': 20**2, 'scale': 0.05, 'center_x': 0, 'center_y': 0},
+            {'n_scales': 3, 'n_pix_x': 20, 'n_pix_y': 20, 'scale': 0.05, 'center_x': 0, 'center_y': 0},
         ]
         # self.kwargs_mean = []
         # for i in range(len(self.light_model_list)):
@@ -102,7 +102,7 @@ class TestParam(object):
         kwargs_fixed = [
             {}, {'sigma': [1, 3]}, {}, {}, {}, {'n_max': 1}, {}, {},
             {}, {}, {}, {'n_max': 0}, {'n_max': 0},
-            {'n_scales': 3, 'n_pixels': 20**2, 'scale': 0.05, 'center_x': 0, 'center_y': 0},
+            {'n_scales': 3, 'n_pix_x': 20, 'n_pix_y': 20, 'scale': 0.05, 'center_x': 0, 'center_y': 0},
         ]
         param = LightParam(light_model_list=self.light_model_list,
                                 kwargs_fixed=kwargs_fixed, type='source_light', linear_solver=True)
