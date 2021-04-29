@@ -22,7 +22,7 @@ def transform(img, n_scales, second_gen=False):
     lvl = n_scales-1
     sh = np.shape(img)
 
-    n1 = sh[1]
+    n1 = sh[0]
     n2 = sh[1]
     
     # B-spline filter

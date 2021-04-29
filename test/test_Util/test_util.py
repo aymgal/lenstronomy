@@ -165,7 +165,7 @@ def test_image2array2image():
 
 def test_array2cube():
     array = np.linspace(1, 200, 200)
-    image = util.array2cube(array, 2, 100)
+    image = util.array2cube(array, 2, 10, 10)
     assert image[0][9][9] == 100
     assert image[1][0][9] == 110
 
@@ -180,11 +180,9 @@ def test_cube2array():
 def test_cube2array2cube():
     cube = np.zeros((2, 10, 10))
     ns, nx, ny = np.shape(cube)
-    assert nx == ny  # condition required
-    nxy = nx*ny
     cube[1, 2, 2] = 1
     array = util.cube2array(cube)
-    cube_new = util.array2cube(array, ns, nxy)
+    cube_new = util.array2cube(array, ns, nx, ny)
     assert cube_new[1, 2, 2] == cube[1, 2, 2]
 
 
@@ -371,9 +369,6 @@ class TestRaise(unittest.TestCase):
         with self.assertRaises(ValueError):
             array = np.ones(5)
             util.array2image(array)
-        with self.assertRaises(ValueError):
-            array = np.ones((2, 2))
-            util.array2cube(array, 2, 2)
         with self.assertRaises(ValueError):
             x, y = np.ones(6), np.ones(6)
             util.get_axes(x, y)

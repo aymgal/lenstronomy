@@ -19,9 +19,9 @@ class SLIT_Starlets(object):
 
     Based on Starck et al. : https://ui.adsabs.harvard.edu/abs/2007ITIP...16..297S/abstract
     """
-    param_names = ['amp', 'n_scales', 'n_pixels', 'scale', 'center_x', 'center_y']
-    lower_limit_default = {'amp': [0], 'n_scales': 2, 'n_pixels': 5, 'center_x': -1000, 'center_y': -1000, 'scale': 0.000000001}
-    upper_limit_default = {'amp': [1e8], 'n_scales': 20, 'n_pixels': 1e10, 'center_x': 1000, 'center_y': 1000, 'scale': 10000000000}
+    param_names = ['amp', 'n_scales', 'n_pix_x', 'n_pix_y', 'scale', 'center_x', 'center_y']
+    lower_limit_default = {'amp': [0], 'n_scales': 2, 'n_pix_x': 5, 'n_pix_y': 5, 'center_x': -1000, 'center_y': -1000, 'scale': 0.000000001}
+    upper_limit_default = {'amp': [1e8], 'n_scales': 20, 'n_pix_x': 1e10, 'n_pix_y': 1e10, 'center_x': 1000, 'center_y': 1000, 'scale': 10000000000}
 
     def __init__(self, thread_count=1, backend='pysparse', fast_inverse=True, second_gen=False, 
                  show_pysap_plots=False, force_no_backend=False):
@@ -73,7 +73,7 @@ class SLIT_Starlets(object):
         self.interpol = Interpol()
         self.thread_count = thread_count
 
-    def function(self, x, y, amp=None, n_scales=None, n_pixels=None, scale=1, center_x=0, center_y=0):
+    def function(self, x, y, amp=None, n_scales=None, n_pix_x=None, n_pix_y=None, scale=1, center_x=0, center_y=0):
         """
         1D inverse starlet transform from starlet coefficients stored in coeffs
         Follows lenstronomy conventions for light profiles.
@@ -85,33 +85,33 @@ class SLIT_Starlets(object):
         :return: reconstructed signal as 1D array of shape (n_pixels,)
         """
         if len(amp.shape) == 1:
-            coeffs = util.array2cube(amp, n_scales, n_pixels)
+            coeffs = util.array2cube(amp, n_scales, n_pix_x, n_pix_y)
         elif len(amp.shape) == 3:
             coeffs = amp
         else:
             raise ValueError("Starlets 'amp' has not the right shape (1D or 3D arrays are supported)")
-        image = self.function_2d(coeffs, n_scales, n_pixels)
+        image = self.function_2d(coeffs, n_scales, n_pix_x, n_pix_y)
         image = self.interpol.function(x, y, image=image, scale=scale,
                                        center_x=center_x, center_y=center_y,
                                        amp=1, phi_G=0)
         return image
 
-    def function_2d(self, coeffs, n_scales, n_pixels):
+    def function_2d(self, coeffs, n_scales, n_pix_x, n_pix_y):
         """
         2D inverse starlet transform from starlet coefficients stored in coeffs
 
         :param coeffs: decomposition coefficients, 
-        ndarray with shape (n_scales, sqrt(n_pixels), sqrt(n_pixels))
+        ndarray with shape (n_scales, n_pix_x, n_pix_y)
         :param n_scales: number of decomposition scales
-        :return: reconstructed signal as 2D array of shape (sqrt(n_pixels), sqrt(n_pixels))
+        :return: reconstructed signal as 2D array of shape (n_pix_x, n_pix_y)
         """
         if self._backend is not None:
-            return self._inverse_transform(coeffs, n_scales, n_pixels)
+            return self._inverse_transform(coeffs, n_scales, n_pix_x, n_pix_y)
         else:
             return starlets_util.inverse_transform(coeffs, fast=self._fast_inverse, 
                                                    second_gen=self._second_gen)
 
-    def decomposition(self, image, n_scales):
+    def decomposition(self, image, n_scales, n_pix_x, n_pix_y):
         """
         1D starlet transform from starlet coefficients stored in coeffs
 
@@ -120,7 +120,7 @@ class SLIT_Starlets(object):
         :return: reconstructed signal as 1D array of shape (n_scales*n_pixels,)
         """
         if len(image.shape) == 1:
-            image_2d = util.array2image(image)
+            image_2d = util.array2image(image, nx=n_pix_x, ny=n_pix_y)
         elif len(image.shape) == 2:
             image_2d = image
         else:
@@ -141,11 +141,11 @@ class SLIT_Starlets(object):
             coeffs = starlets_util.transform(image, n_scales, second_gen=self._second_gen)
         return coeffs
 
-    def _inverse_transform(self, coeffs, num_scales, num_pixels):
+    def _inverse_transform(self, coeffs, num_scales, num_pixels_x, num_pixels_y):
         if self._fast_inverse:
             # for 1st gen starlet the reconstruction can be performed by summing all scales 
             return np.sum(coeffs, axis=0)
-        self._prepare_transform(num_scales, num_pixels)
+        self._prepare_transform(num_scales, num_pixels_x, num_pixels_y)
         coeffs = self._array2list(coeffs)
         if self._backend == 'pysparse':
             return self._inverse_transform_pysparse(coeffs, num_scales)
@@ -153,7 +153,7 @@ class SLIT_Starlets(object):
             return self._inverse_transform_pysap(coeffs, num_scales)
 
     def _inverse_transform_pysparse(self, coeffs, num_scales):
-        image = self._transf.recon(coeffs, adjoint=False)
+        image = self._transf.recons(coeffs, adjoint=False)
         return image
 
     def _inverse_transform_pysap(self, coeffs, num_scales):
@@ -166,7 +166,7 @@ class SLIT_Starlets(object):
         return image
 
     def _transform(self, image, num_scales):
-        self._prepare_transform(num_scales, image.size)
+        self._prepare_transform(num_scales, image.shape[0], image.shape[1])
         if self._backend == 'pysparse':
             coeffs = self._transform_pysparse(image, num_scales)
         else:
@@ -187,17 +187,23 @@ class SLIT_Starlets(object):
         coeffs = self._transf.analysis_data
         return coeffs
 
-    def _prepare_transform(self, num_scales, num_pixels):
+    def _prepare_transform(self, num_scales, num_pixels_x, num_pixels_y):
         """if needed, update the loaded pySAP transform to correct number of scales"""
-        if not hasattr(self, '_transf') or num_scales != self._num_scales or num_pixels != self._num_pixels:
+        if (not hasattr(self, '_transf')
+            or num_scales != self._num_scales 
+            or num_pixels_x != self._num_pixels_x 
+            or num_pixels_y != self._num_pixels_y):
             if self._backend == 'pysparse':
                 self._transf = self._class(bord=0, gen2=self._second_gen, verbose=False,
                                            nb_procs=self.thread_count)
             else:
+                if num_pixels_x != num_pixels_y:
+                    raise ValueError("The 'pysap' backend only supports starlet transform for of square images")
                 self._transf = self._class(nb_scale=num_scales, verbose=False, 
                                            nb_procs=self.thread_count)
             self._num_scales = num_scales
-            self._num_pixels = num_pixels
+            self._num_pixels_x = num_pixels_x
+            self._num_pixels_y = num_pixels_y
 
     @staticmethod
     def _list2array(coeffs):

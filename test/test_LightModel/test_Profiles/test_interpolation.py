@@ -16,10 +16,13 @@ class TestInterpol(object):
 
         :return:
         """
-        x, y = util.make_grid(numPix=20, deltapix=1.)
+        numPix_x = 20
+        numPix_y = 20
+        _, _, ra_at_xy_0, dec_at_xy_0, _, _, Mpix2coord, _ = util.make_grid_with_coordtransform(numPix_x, 1)
+        x, y = util.grid_from_coordinate_transform(numPix_x, numPix_y, Mpix2coord, ra_at_xy_0, dec_at_xy_0)
         gauss = Gaussian()
         flux = gauss.function(x, y, amp=1., center_x=0., center_y=0., sigma=1.)
-        image = util.array2image(flux)
+        image = util.array2image(flux, nx=numPix_x, ny=numPix_y)
         interp = Interpol()
         kwargs_interp = {'image': image, 'scale': 1., 'phi_G': 0., 'center_x': 0., 'center_y': 0.}
         output = interp.function(x, y, **kwargs_interp)
