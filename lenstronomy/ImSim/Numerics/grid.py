@@ -185,7 +185,7 @@ class RegularGrid(Coordinates1D):
             flux_evaluate_indexes = util.image2array(flux_evaluate_indexes)
         self._compute_indexes = self._subgrid_index(flux_evaluate_indexes, self._supersampling_factor, self._nx, self._ny)
 
-        x_grid_sub, y_grid_sub = util.make_subgrid(self._x_grid, self._y_grid, self._supersampling_factor)
+        x_grid_sub, y_grid_sub = util.make_subgrid(self._x_grid, self._y_grid, self._supersampling_factor, nx=self._nx, ny=self._ny)
         self._ra_subgrid = x_grid_sub[self._compute_indexes]
         self._dec_subgrid = y_grid_sub[self._compute_indexes]
 
