@@ -328,22 +328,26 @@ class ImageLinearFit(ImageModel):
 
     def update_pixel_kwargs(self, kwargs_source, kwargs_lens_light):
         """
-
         Update kwargs arguments for pixel-based profiles with fixed properties
         such as their number of pixels, scale, and center coordinates (fixed to the origin).
-
+        
         :param kwargs_source: list of keyword arguments corresponding to the superposition of different source light profiles
         :param kwargs_lens_light: list of keyword arguments corresponding to the superposition of different lens light profiles
         :return: updated kwargs_source and kwargs_lens_light
         """
-        # in case the source plane grid size has changed, update the kwargs accordingly
-        ss_factor_source = self.SourceNumerics.grid_supersampling_factor
-        kwargs_source[0]['n_pixels'] = int(self.Data.num_pixel * ss_factor_source**2)  #  effective number of pixels in source plane
-        kwargs_source[0]['scale'] = self.Data.pixel_width / ss_factor_source  # effective pixel size of source plane grid
-        # pixelated reconstructions have no well-defined center, we put it arbitrarily at (0, 0), center of the image
-        kwargs_source[0]['center_x'] = 0
-        kwargs_source[0]['center_y'] = 0
-        # do the same if the lens light has been reconstructed
+        nx, ny = self.Data.num_pixel_axes
+        if kwargs_source is not None and len(kwargs_source) > 0:
+            # in case the source plane grid size has changed, update the kwargs accordingly
+            ss_factor_source = self.SourceNumerics.grid_supersampling_factor
+            # effective number of pixels in source plane grid along each axis
+            kwargs_source[0]['n_pix_x'] = nx * ss_factor_source
+            kwargs_source[0]['n_pix_y'] = ny * ss_factor_source
+            # effective pixel size of source plane grid
+            kwargs_source[0]['scale'] = self.Data.pixel_width / ss_factor_source
+            # pixelated reconstructions have no well-defined center, we put it arbitrarily at (0, 0), center of the image
+            kwargs_source[0]['center_x'] = 0
+            kwargs_source[0]['center_y'] = 0
+            # do the same if the lens light has been reconstructed
         if kwargs_lens_light is not None and len(kwargs_lens_light) > 0:
             kwargs_lens_light[0]['n_pix_x'] = nx
             kwargs_lens_light[0]['n_pix_y'] = ny
