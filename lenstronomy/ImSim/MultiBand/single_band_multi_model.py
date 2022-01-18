@@ -217,16 +217,4 @@ class SingleBandMultiModel(ImageLinearFit):
         threshold_increment_high_freq_list = kwargs_pixelbased.pop('threshold_increment_high_freq_list', None)
         if threshold_increment_high_freq_list is not None:
             kwargs_pixelbased['threshold_increment_high_freq'] = threshold_increment_high_freq_list[band_index]
-        # filtering point source regions
-        filter_point_source_residuals_list = kwargs_pixelbased.pop('filter_point_source_residuals_list', None)
-        if filter_point_source_residuals_list is not None:
-            kwargs_pixelbased['filter_point_source_residuals'] = filter_point_source_residuals_list[band_index]
-        # minimal starlet scale to keep in point source regions
-        min_scale_point_source_residuals_list = kwargs_pixelbased.pop('min_scale_point_source_residuals_list', None)
-        if min_scale_point_source_residuals_list is not None:
-            kwargs_pixelbased['min_scale_point_source_residuals'] = min_scale_point_source_residuals_list[band_index]
-        # radius of masked regions for point source filtering
-        radius_point_source_residuals_list = kwargs_pixelbased.pop('radius_point_source_residuals_list', None)
-        if radius_point_source_residuals_list is not None:
-            kwargs_pixelbased['radius_point_source_residuals'] = radius_point_source_residuals_list[band_index]
         return kwargs_pixelbased

@@ -50,7 +50,7 @@ class ImageLinearFit(ImageModel):
             # update the pixel-based solver with the likelihood mask
             self.PixelSolver.set_likelihood_mask(self.likelihood_mask)
             # add the function that carries out linear inversion of point source amplitudes
-            ps_solver_func = functools.partial(self._image_linear_solve, point_source_only=True)
+            ps_solver_func = functools.partial(self._image_linear_solve)
             self.PixelSolver.set_point_source_solver_func(ps_solver_func)
 
     def image_linear_solve(self, kwargs_lens=None, kwargs_source=None, kwargs_lens_light=None, kwargs_ps=None,
@@ -72,7 +72,7 @@ class ImageLinearFit(ImageModel):
                                         kwargs_special, inv_bool=inv_bool)
 
     def _image_linear_solve(self, kwargs_lens=None, kwargs_source=None, kwargs_lens_light=None, kwargs_ps=None,
-                            kwargs_extinction=None, kwargs_special=None, inv_bool=False, point_source_only=False,
+                            kwargs_extinction=None, kwargs_special=None, inv_bool=False,
                             data_response_external=None):
         """
 
@@ -85,17 +85,16 @@ class ImageLinearFit(ImageModel):
         :param kwargs_lens_light: list of keyword arguments corresponding to different lens light surface brightness profiles
         :param kwargs_ps: keyword arguments corresponding to "other" parameters, such as external shear and point source image positions
         :param inv_bool: if True, invert the full linear solver Matrix Ax = y for the purpose of the covariance matrix. This has no impact in case of pixel-based modelling.
-        :param point_source_only: if True, only solves for linear amplitudes related to point sources.
         :param data_response_external: consider this 1d vector as the data response for the linear inversion, instead of the one attached to the data class.
         :return: 2d array of surface brightness pixels of the optimal solution of the linear parameters to match the data
         """
-        if self._pixelbased_bool is True and point_source_only is not True:
+        if self._pixelbased_bool is True:
             model, model_error, cov_param, param = self.image_pixelbased_solve(kwargs_lens, kwargs_source, 
                                                                                kwargs_lens_light, kwargs_ps, 
                                                                                kwargs_extinction, kwargs_special)
         else:
             A = self._linear_response_matrix(kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps, 
-                                             kwargs_extinction, kwargs_special, point_source_only=point_source_only)
+                                             kwargs_extinction, kwargs_special)
             C_D_response, model_error = self._error_response(kwargs_lens, kwargs_ps, kwargs_special=kwargs_special)
             if data_response_external is None:
                 d = self.data_response
@@ -103,8 +102,7 @@ class ImageLinearFit(ImageModel):
                 d = data_response_external
             param, cov_param, wls_model = de_lens.get_param_WLS(A.T, 1 / C_D_response, d, inv_bool=inv_bool)
             model = self.array_masked2image(wls_model)
-            _, _, _, _ = self.update_linear_kwargs(param, kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps,
-                                                   point_source_only=point_source_only)
+            _, _, _, _ = self.update_linear_kwargs(param, kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps)
         return model, model_error, cov_param, param
 
     def image_pixelbased_solve(self, kwargs_lens=None, kwargs_source=None, kwargs_lens_light=None, 
@@ -264,8 +262,7 @@ class ImageLinearFit(ImageModel):
         return num
 
     def _linear_response_matrix(self, kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps,
-                                kwargs_extinction=None, kwargs_special=None, unconvolved=False,
-                                point_source_only=False):
+                                kwargs_extinction=None, kwargs_special=None, unconvolved=False):
         """
 
         computes the linear response matrix (m x n), with n being the data size and m being the coefficients
@@ -282,15 +279,12 @@ class ImageLinearFit(ImageModel):
         :param unconvolved: bool, if True, computes components without convolution kernel (will not work for point sources)
         :return: response matrix (m x n)
         """
-        if point_source_only is False:
-            x_grid, y_grid = self.ImageNumerics.coordinates_evaluate
-            source_light_response, n_source = self.source_mapping.image_flux_split(x_grid, y_grid, kwargs_lens,
-                                                                                   kwargs_source)
-            extinction = self._extinction.extinction(x_grid, y_grid, kwargs_extinction=kwargs_extinction,
-                                                     kwargs_special=kwargs_special)
-            lens_light_response, n_lens_light = self.LensLightModel.functions_split(x_grid, y_grid, kwargs_lens_light)
-        else:
-            n_source, n_lens_light = 0, 0
+        x_grid, y_grid = self.ImageNumerics.coordinates_evaluate
+        source_light_response, n_source = self.source_mapping.image_flux_split(x_grid, y_grid, kwargs_lens,
+                                                                               kwargs_source)
+        extinction = self._extinction.extinction(x_grid, y_grid, kwargs_extinction=kwargs_extinction,
+                                                 kwargs_special=kwargs_special)
+        lens_light_response, n_lens_light = self.LensLightModel.functions_split(x_grid, y_grid, kwargs_lens_light)
 
         ra_pos, dec_pos, amp, n_points = self.point_source_linear_response_set(kwargs_ps, kwargs_lens, kwargs_special, with_amp=False)
         num_param = n_points + n_lens_light + n_source
@@ -318,8 +312,7 @@ class ImageLinearFit(ImageModel):
             n += 1
         return A
 
-    def update_linear_kwargs(self, param, kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps,
-                             point_source_only=False):
+    def update_linear_kwargs(self, param, kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps):
         """
 
         links linear parameters to kwargs arguments
@@ -328,9 +321,8 @@ class ImageLinearFit(ImageModel):
         :return: updated list of kwargs with linear parameter values
         """
         i = 0
-        if point_source_only is False:
-            kwargs_source, i = self.SourceModel.update_linear(param, i, kwargs_list=kwargs_source)
-            kwargs_lens_light, i = self.LensLightModel.update_linear(param, i, kwargs_list=kwargs_lens_light)
+        kwargs_source, i = self.SourceModel.update_linear(param, i, kwargs_list=kwargs_source)
+        kwargs_lens_light, i = self.LensLightModel.update_linear(param, i, kwargs_list=kwargs_lens_light)
         kwargs_ps, i = self.PointSource.update_linear(param, i, kwargs_ps, kwargs_lens)
         return kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps
 
