@@ -116,8 +116,9 @@ class LinearBasis(LightModelBase):
                 n_list += [num_param]
             elif model in ['SLIT_STARLETS', 'SLIT_STARLETS_GEN2']:
                 n_scales = kwargs_list[i]['n_scales']
-                n_pixels = kwargs_list[i]['n_pixels']
-                num_param = int(n_scales * n_pixels)
+                n_pix_x = kwargs_list[i]['n_pix_x']
+                n_pix_y = kwargs_list[i]['n_pix_y']
+                num_param = int(n_scales * n_pix_x * n_pix_y)
                 n_list += [num_param]  # TODO : find a way to make it the number of source pixels
             else:
                 raise ValueError('model type %s not valid!' % model)
@@ -152,8 +153,9 @@ class LinearBasis(LightModelBase):
                 i += num_param
             elif model in ['SLIT_STARLETS', 'SLIT_STARLETS_GEN2']:
                 n_scales = kwargs_list[k]['n_scales']
-                n_pixels = kwargs_list[k]['n_pixels']
-                num_param = int(n_scales * n_pixels)
+                n_pix_x = kwargs_list[k]['n_pix_x']
+                n_pix_y = kwargs_list[k]['n_pix_y']
+                num_param = int(n_scales * n_pix_x * n_pix_y)
                 kwargs_list[k]['amp'] = param[i:i+num_param]
                 i += num_param
             else:

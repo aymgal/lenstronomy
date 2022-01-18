@@ -78,12 +78,13 @@ class LightParam(object):
                         kwargs['amp'] = args[i:i + num_param]
                         i += num_param
                     elif model in ['SLIT_STARLETS', 'SLIT_STARLETS_GEN2'] and name == 'amp':
-                        if 'n_scales' in kwargs_fixed and 'n_pixels' in kwargs_fixed:
+                        if 'n_scales' in kwargs_fixed and 'n_pix_x' in kwargs_fixed and 'n_pix_y' in kwargs_fixed:
                             n_scales = kwargs_fixed['n_scales']
-                            n_pixels = kwargs_fixed['n_pixels']
+                            n_pix_x  = kwargs_fixed['n_pix_x']
+                            n_pix_y  = kwargs_fixed['n_pix_y']
                         else:
-                            raise ValueError("'n_scales' and 'n_pixels' both need to be fixed in %s." % model)
-                        num_param = n_scales * n_pixels
+                            raise ValueError("'n_scales', 'n_pix_x' and 'n_pix_y' all need to be fixed in %s." % model)
+                        num_param = n_scales * n_pix_x * n_pix_y
                         kwargs['amp'] = args[i:i + num_param]
                         i += num_param
                     else:
@@ -123,16 +124,19 @@ class LightParam(object):
                             n_scales = kwargs_fixed['n_scales']
                         else:
                             raise ValueError("'n_scales' for SLIT_STARLETS not found in kwargs_fixed")
-                        if 'n_pixels' in kwargs_fixed:
-                            n_pixels = kwargs_fixed['n_pixels']
+                        if 'n_pix_x' in kwargs_fixed:
+                            n_pix_x = kwargs_fixed['n_pix_x']
                         else:
-                            raise ValueError("'n_pixels' for SLIT_STARLETS not found in kwargs_fixed")
-                        num_param = n_scales * n_pixels
+                            raise ValueError("'n_pix_x' for SLIT_STARLETS not found in kwargs_fixed")
+                        if 'n_pix_y' in kwargs_fixed:
+                            n_pix_y = kwargs_fixed['n_pix_y']
+                        else:
+                            raise ValueError("'n_pix_y' for SLIT_STARLETS not found in kwargs_fixed")
+                        num_param = n_scales * n_pix_x * n_pix_y
                         for i in range(num_param):
                             args.append(kwargs[name][i])
-                    elif model in ['SLIT_STARLETS', 'SLIT_STARLETS_GEN2'] and name in ['n_scales', 'n_pixels', 'scale',
-                                                                                       'center_x', 'center_y']:
-                        raise ValueError("'{}' must be a fixed keyword argument for STARLETS-like models".format(name))
+                    elif model in ['SLIT_STARLETS', 'SLIT_STARLETS_GEN2'] and name in ['n_scales', 'n_pix_x', 'n_pix_y', 'scale', 'center_x', 'center_y']:
+                        raise ValueError("'{}' must be a fixed keyword argument for 'STARLETS' models".format(name))
                     elif model in ['MULTI_GAUSSIAN', 'MULTI_GAUSSIAN_ELLIPSE'] and name == 'amp':
                         num_param = len(kwargs['sigma'])
                         for i in range(num_param):
@@ -167,11 +171,12 @@ class LightParam(object):
                         for i in range(num_param):
                             name_list.append(str(name + '_' + self._type + str(k)))
                     elif model in ['SLIT_STARLETS', 'SLIT_STARLETS_GEN2'] and name == 'amp':
-                        if 'n_scales' not in kwargs_fixed or 'n_pixels' not in kwargs_fixed:
-                            raise ValueError("n_scales and n_pixels need to be fixed when using STARLETS-like models!")
+                        if 'n_scales' not in kwargs_fixed or 'n_pix_x' not in kwargs_fixed or 'n_pix_y' not in kwargs_fixed:
+                            raise ValueError("'n_scales', 'n_pix_x' and 'n_pix_y' need to be fixed when using 'STARLETS' models!")
                         n_scales = kwargs_fixed['n_scales']
-                        n_pixels = kwargs_fixed['n_pixels']
-                        num_param = n_scales * n_pixels
+                        n_pix_x = kwargs_fixed['n_pix_x']
+                        n_pix_y = kwargs_fixed['n_pix_y']
+                        num_param = n_scales * n_pix_x * n_pix_y
                         num += num_param
                         for i in range(num_param):
                             name_list.append(str(name + '_' + self._type + str(k)))

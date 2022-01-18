@@ -22,7 +22,7 @@ class MultiBandImageReconstruction(object):
     """
 
     def __init__(self, multi_band_list, kwargs_model, kwargs_params, multi_band_type='multi-linear',
-                 kwargs_likelihood=None, verbose=True):
+                 kwargs_likelihood=None, kwargs_pixelbased=None, verbose=True):
         """
 
         :param multi_band_list: list of imaging data configuration [[kwargs_data, kwargs_psf, kwargs_numerics], [...]]
@@ -33,6 +33,7 @@ class MultiBandImageReconstruction(object):
             - 'linear-joint': linear amplitudes ae jointly inferred
             - 'single-band': single band
         :param kwargs_likelihood: likelihood keyword arguments as supported by the Likelihood() class
+        :param kwargs_pixelbased: keyword arguments with various settings related to the pixel-based solver (see SLITronomy documentation)
         :param verbose: if True (default), computes and prints the total log-likelihood.
         This can deactivated for speedup purposes (does not run linear inversion again), and reduces the number of prints.
         """
@@ -49,7 +50,8 @@ class MultiBandImageReconstruction(object):
             multi_band_type = 'multi-linear'  # this makes sure that the linear inversion outputs are coming in a list
         self._imageModel = class_creator.create_im_sim(multi_band_list, multi_band_type, kwargs_model,
                                                        bands_compute=bands_compute,
-                                                       likelihood_mask_list=image_likelihood_mask_list)
+                                                       likelihood_mask_list=image_likelihood_mask_list,
+                                                       kwargs_pixelbased=kwargs_pixelbased)
 
         # here we perform the (joint) linear inversion with all data
         model, error_map, cov_param, param = self._imageModel.image_linear_solve(inv_bool=True, **kwargs_params)
@@ -102,7 +104,7 @@ class ModelBand(object):
 
     """
     def __init__(self, multi_band_list, kwargs_model, model, error_map, cov_param, param, kwargs_params,
-                 image_likelihood_mask_list=None, band_index=0, verbose=True):
+                 image_likelihood_mask_list=None, band_index=0, kwargs_pixelbased=None, verbose=True):
         """
 
         :param multi_band_list: list of imaging data configuration [[kwargs_data, kwargs_psf, kwargs_numerics], [...]]
@@ -119,7 +121,7 @@ class ModelBand(object):
         """
 
         self._bandmodel = SingleBandMultiModel(multi_band_list, kwargs_model, likelihood_mask_list=image_likelihood_mask_list,
-                                               band_index=band_index)
+                                               band_index=band_index, kwargs_pixelbased=kwargs_pixelbased)
         self._kwargs_special_partial = kwargs_params.get('kwargs_special', None)
         kwarks_lens_partial, kwargs_source_partial, kwargs_lens_light_partial, kwargs_ps_partial, self._kwargs_extinction_partial = self._bandmodel.select_kwargs(**kwargs_params)
         self._kwargs_lens_partial, self._kwargs_source_partial, self._kwargs_lens_light_partial, self._kwargs_ps_partial = self._bandmodel.update_linear_kwargs(param, kwarks_lens_partial, kwargs_source_partial, kwargs_lens_light_partial, kwargs_ps_partial)

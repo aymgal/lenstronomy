@@ -308,11 +308,17 @@ class ImageModel(object):
         Currently, pixel-based light profiles are: 'SLIT_STARLETS', 'SLIT_STARLETS_GEN2'.
         """
         source_model_list = self.SourceModel.profile_type_list
+        lens_light_model_list = self.LensLightModel.profile_type_list
         if 'SLIT_STARLETS' in source_model_list or 'SLIT_STARLETS_GEN2' in source_model_list:
             if len(source_model_list) > 1:
                 raise ValueError("'SLIT_STARLETS' or 'SLIT_STARLETS_GEN2' must be the only source model list for pixel-based modelling")
             return True
-        return False
+        elif 'SLIT_STARLETS' in lens_light_model_list or 'SLIT_STARLETS_GEN2' in lens_light_model_list:
+            if len(source_model_list) > 1:
+                raise ValueError("'SLIT_STARLETS' or 'SLIT_STARLETS_GEN2' must be the only lens light model list for pixel-based modelling")
+            return True
+        else:
+            return False
 
     def _setup_pixelbased_source_numerics(self, kwargs_numerics, kwargs_pixelbased):
         """
@@ -334,7 +340,7 @@ class ImageModel(object):
         if (supersampling_convolution is True and supersampling_factor > 1):
             raise ValueError("Only non-supersampled convolution is supported for pixel-based modelling")
 
-        # setup the source numerics with a (possibily) different supersampling resolution
+        # setup the source numerics with a (possibly) different supersampling resolution
         supersampling_factor_source = kwargs_pixelbased.pop('supersampling_factor_source', 1)
         kwargs_numerics_source = kwargs_numerics.copy()
         kwargs_numerics_source['supersampling_factor'] = supersampling_factor_source

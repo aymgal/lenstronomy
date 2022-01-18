@@ -17,11 +17,25 @@ class TestInterpol(object):
 
         :return:
         """
+# <<<<<<< HEAD
         for len_x, len_y in [(20, 20), (14, 20)]:
             x, y = util.make_grid(numPix=(len_x, len_y), deltapix=1.)
             gauss = Gaussian()
             flux = gauss.function(x, y, amp=1., center_x=0., center_y=0., sigma=1.)
             image = util.array2image(flux, nx=len_y, ny=len_x)
+# =======
+#         numPix_x = 20
+#         numPix_y = 20
+#         _, _, ra_at_xy_0, dec_at_xy_0, _, _, Mpix2coord, _ = util.make_grid_with_coordtransform(numPix_x, 1)
+#         x, y = util.grid_from_coordinate_transform(numPix_x, numPix_y, Mpix2coord, ra_at_xy_0, dec_at_xy_0)
+#         gauss = Gaussian()
+#         flux = gauss.function(x, y, amp=1., center_x=0., center_y=0., sigma=1.)
+#         image = util.array2image(flux, nx=numPix_x, ny=numPix_y)
+#         interp = Interpol()
+#         kwargs_interp = {'image': image, 'scale': 1., 'phi_G': 0., 'center_x': 0., 'center_y': 0.}
+#         output = interp.function(x, y, **kwargs_interp)
+#         npt.assert_equal(output, flux)
+# >>>>>>> dev-slit-ps
 
             interp = Interpol()
             kwargs_interp = {'image': image, 'scale': 1., 'phi_G': 0., 'center_x': 0., 'center_y': 0.}

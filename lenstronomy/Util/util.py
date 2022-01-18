@@ -142,25 +142,21 @@ def image2array(image):
 
 
 @export
-def array2cube(array, n_1, n_23):
+def array2cube(array, n_1, n_2, n_3):
     """
-    returns the information contained in a 1d array of shape (n_1*n_23*n_23) into 3d array with shape (n_1, sqrt(n_23), sqrt(n_23))
-
+    returns the information contained in a 1d array of shape (n_1*n_2*n_3) into 3d array with shape (n_1, n_2, n_3)
+    
     :param array: image values
     :type array: 1d array
     :param n_1: first dimension of returned array
-    :type n_1: int
-    :param n_23: square of second and third dimensions of returned array
-    :type n_23: int
+    :type int:
+    :param n_2: second dimension of returned array
+    :type int:
+    :param n_3: third dimension of returned array
+    :type int:
     :returns: 3d array
-    :raises ValueError: when n_23 is not a perfect square
     """
-    n = int(np.sqrt(n_23))
-    if n ** 2 != n_23:
-        raise ValueError("2nd and 3rd dims (%s) are not square of integer number!" % n_23)
-    n_2, n_3 = n, n
-    cube = array.reshape(n_1, n_2, n_3)
-    return cube
+    return array.reshape(n_1, n_2, n_3)
 
 
 @export
@@ -173,9 +169,8 @@ def cube2array(cube):
     :returns: 1d array
     """
     n_1, n_2, n_3 = cube.shape
-    array = cube.reshape(n_1 * n_2 * n_3)
-    return array
-
+    return cube.reshape(n_1 * n_2 * n_3)
+    
 
 @export
 def make_grid(numPix, deltapix, subgrid_res=1, left_lower=False):
@@ -582,7 +577,7 @@ def hyper2F2_array(a, b, c, d, x):
 
 
 @export
-def make_subgrid(ra_coord, dec_coord, subgrid_res=2):
+def make_subgrid(ra_coord, dec_coord, subgrid_res=2, nx=0, ny=0):
     """
     return a grid with subgrid resolution
     :param ra_coord:
@@ -590,16 +585,16 @@ def make_subgrid(ra_coord, dec_coord, subgrid_res=2):
     :param subgrid_res:
     :return:
     """
-    ra_array = array2image(ra_coord)
-    dec_array = array2image(dec_coord)
-    n = len(ra_array)
+    ra_array = array2image(ra_coord, nx=nx, ny=ny)
+    dec_array = array2image(dec_coord, nx=nx, ny=ny)
+    nx, ny = ra_array.shape
     d_ra_x = ra_array[0][1] - ra_array[0][0]
     d_ra_y = ra_array[1][0] - ra_array[0][0]
     d_dec_x = dec_array[0][1] - dec_array[0][0]
     d_dec_y = dec_array[1][0] - dec_array[0][0]
 
-    ra_array_new = np.zeros((n * subgrid_res, n * subgrid_res))
-    dec_array_new = np.zeros((n * subgrid_res, n * subgrid_res))
+    ra_array_new = np.zeros((nx*subgrid_res, ny*subgrid_res))
+    dec_array_new = np.zeros((nx*subgrid_res, ny*subgrid_res))
     for i in range(0, subgrid_res):
         for j in range(0, subgrid_res):
             ra_array_new[i::subgrid_res, j::subgrid_res] = ra_array + d_ra_x * (
