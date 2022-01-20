@@ -1,4 +1,4 @@
-__author__ = 'sibirrer'
+__author__ = 'sibirrer', 'aymgal'
 
 import pytest
 import numpy as np
@@ -165,8 +165,8 @@ class TestLikelihoodModule(object):
             'source_light_model_list': ['SLIT_STARLETS'],
         }
         
-        kwargs_fixed_source = [{'n_scales': n_scales, 'n_pixels': numPix_source**2, 'scale': 1, 'center_x': 0, 'center_y': 0}]
-        kwargs_fixed_lens_light = [{'n_scales': n_scales, 'n_pixels': self.numPix**2, 'scale': 1, 'center_x': 0, 'center_y': 0}]
+        kwargs_fixed_source = [{'n_scales': n_scales, 'n_pix_x': numPix_source, 'n_pix_y': numPix_source, 'scale': 1, 'center_x': 0, 'center_y': 0}]
+        kwargs_fixed_lens_light = [{'n_scales': n_scales, 'n_pix_x': self.numPix, 'n_pix_y': self.numPix, 'scale': 1, 'center_x': 0, 'center_y': 0}]
         kwargs_constraints = {'source_grid_offset': True}
         param_class = Param(kwargs_model, 
                             kwargs_fixed_source=kwargs_fixed_source, 

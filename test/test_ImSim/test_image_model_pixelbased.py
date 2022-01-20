@@ -1,22 +1,23 @@
-__author__ = 'sibirrer'
+__author__ = 'sibirrer', 'aymgal'
 
 import numpy.testing as npt
 import numpy as np
 import pytest
 import unittest
+import copy
 
-import lenstronomy.Util.param_util as param_util
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.PointSource.point_source import PointSource
 from lenstronomy.ImSim.image_model import ImageModel
 from lenstronomy.ImSim.image_linear_solve import ImageLinearFit
-import lenstronomy.Util.simulation_util as sim_util
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from lenstronomy.Data.imaging_data import ImageData
 from lenstronomy.Data.psf import PSF
 from lenstronomy.ImSim.differential_extinction import DifferentialExtinction
 from lenstronomy.Util import util
+import lenstronomy.Util.simulation_util as sim_util
+import lenstronomy.Util.param_util as param_util
 
 from lenstronomy.LightModel.Profiles.starlets import SLIT_Starlets
 
@@ -99,15 +100,16 @@ class TestImageModel(object):
             # following choices are to minimize pixel solver runtime (not to get accurate reconstruction!)
             'threshold_decrease_type': 'none',
             'num_iter_source': 2,
-            'num_iter_lens': 2,
-            'num_iter_global': 2,
             'num_iter_weights': 2,
         }
+        kwargs_pixelbased_lens = copy.deepcopy(kwargs_pixelbased)
+        kwargs_pixelbased_lens.update({'num_iter_lens': 2, 'num_iter_global': 2})
         self.imageModel = ImageLinearFit(data_class, psf_class, lens_model_class, 
                                          source_model_class=source_model_class, 
                                          lens_light_model_class=lens_light_model_class, 
                                          point_source_class=None,
-                                         kwargs_numerics=kwargs_numerics, kwargs_pixelbased=kwargs_pixelbased)
+                                         kwargs_numerics=kwargs_numerics, 
+                                         kwargs_pixelbased=kwargs_pixelbased_lens)
         self.imageModel_source = ImageLinearFit(data_class, psf_class, lens_model_class, 
                                                 source_model_class=source_model_class, 
                                                 lens_light_model_class=None, 
@@ -288,10 +290,10 @@ class TestRaise(unittest.TestCase):
             # following choices are to minimize pixel solver runtime (not to get accurate reconstruction!)
             'threshold_decrease_type': 'none',
             'num_iter_source': 2,
-            'num_iter_lens': 2,
-            'num_iter_global': 2,
             'num_iter_weights': 2,
         }
+        self.kwargs_pixelbased_lens = copy.deepcopy(self.kwargs_pixelbased)
+        self.kwargs_pixelbased_lens.update({'num_iter_lens': 2, 'num_iter_global': 2})
 
     def test_raise(self):
         with self.assertRaises(ValueError):
