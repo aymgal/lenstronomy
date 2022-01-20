@@ -15,6 +15,11 @@ from lenstronomy.ImSim.image_model import ImageModel
 import lenstronomy.Util.simulation_util as sim_util
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 
+from lenstronomy.LightModel.Profiles.starlets import SLIT_Starlets
+
+
+_force_no_backend = True  # if issues on Travis-CI to install pysap, force use python-only functions
+
 
 class TestImageModel(object):
     """
@@ -75,6 +80,34 @@ class TestImageModel(object):
                         'point_source_model_list': ['SOURCE_POSITION'], 'fixed_magnification_list': [True]}
         self.imageModel = MultiLinear(multi_band_list, kwargs_model, likelihood_mask_list=None, compute_bool=None)
 
+        # do the same with some pixel-based light profiles (calling SLITronomy solver in the background)
+        source_model_list_pix = ['SLIT_STARLETS']
+        kwargs_model_pix = {
+            'lens_model_list': lens_model_list, 
+            'source_light_model_list': source_model_list_pix,
+        }
+        kwargs_psf_pix = {'psf_type': 'PIXEL', 'kernel_point_source': psf_class.kernel_point_source}
+        kwargs_numerics_pix = {'supersampling_factor': 1, }
+        multi_band_list_pix = [[kwargs_data, kwargs_psf_pix, kwargs_numerics_pix]]
+        kwargs_pixelbased_mb = {
+            # some options can (optionally) now be lists, same length as multi_band_list
+            'supersampling_factor_source_list': [2], # list of supersampling of pixelated source grid
+            'min_num_pix_source_list': [24],
+            'min_threshold_list': [3],
+            'threshold_increment_high_freq_list': [1],
+
+            'threshold_decrease_type': 'none',
+            'num_iter_source': 2,
+            'num_iter_weights': 2,
+        }
+        self.imageModel_pix = MultiLinear(multi_band_list_pix, kwargs_model_pix, 
+                                          kwargs_pixelbased=kwargs_pixelbased_mb)
+        n_scales = 6
+        source_map = self.imageModel._imageModel_list[0].source_surface_brightness(self.kwargs_source, de_lensed=True, unconvolved=True)
+        starlets_class = SLIT_Starlets(force_no_backend=_force_no_backend)
+        source_map_starlets = starlets_class.decomposition_2d(source_map, n_scales)
+        self.kwargs_source_pix = [{'amp': source_map_starlets, 'n_scales': n_scales, 'n_pix_x': numPix, 'n_pix_y': numPix, 'scale': deltaPix, 'center_x': 0, 'center_y': 0}]
+
     def test_image_linear_solve(self):
         model, error_map, cov_param, param = self.imageModel.image_linear_solve(self.kwargs_lens, self.kwargs_source, self.kwargs_lens_light, self.kwargs_ps, inv_bool=False)
         chi2_reduced = self.imageModel._imageModel_list[0].reduced_chi2(model[0], error_map[0])
@@ -93,6 +126,20 @@ class TestImageModel(object):
     def test_numData_evaluate(self):
         numData = self.imageModel.num_data_evaluate
         assert numData == 10000
+
+    def test_image_linear_solve_pixelbased(self):
+        model, error_map, cov_param, param = self.imageModel_pix.image_linear_solve(kwargs_lens=self.kwargs_lens, kwargs_source=self.kwargs_source_pix, inv_bool=False)
+        chi2_reduced = self.imageModel_pix._imageModel_list[0].reduced_chi2(model[0], error_map[0])
+        npt.assert_almost_equal(chi2_reduced, 1, decimal=1)
+        chi2_reduced_list = self.imageModel_pix.reduced_residuals(model_list=model, error_map_list=error_map)
+        npt.assert_almost_equal(np.sum(chi2_reduced_list[0]**2)/(100**2), 1, decimal=1)
+
+    def test_likelihood_data_given_model_pixelbased(self):
+        logL = self.imageModel_pix.likelihood_data_given_model(kwargs_lens=self.kwargs_lens, kwargs_source=self.kwargs_source_pix, source_marg=False)
+        npt.assert_almost_equal(logL, -5100, decimal=-3)
+
+        logLmarg = self.imageModel_pix.likelihood_data_given_model(kwargs_lens=self.kwargs_lens, kwargs_source=self.kwargs_source_pix, source_marg=True)
+        npt.assert_almost_equal(logL - logLmarg, 0, decimal=-2)
 
 
 if __name__ == '__main__':
