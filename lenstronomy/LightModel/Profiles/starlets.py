@@ -29,6 +29,7 @@ class SLIT_Starlets(object):
         Load pySAP package if found, and initialize the Starlet transform.
 
         :param thread_count: number of threads used for pySAP computations
+        :param backend: choose between pysparse.MRStarlet functions or of pysap BsplineWaveletTransformATrousAlgorithm function
         :param fast_inverse: if True, reconstruction is simply the sum of each scale (only for 1st generation starlet transform)
         :param second_gen: if True, uses the second generation of starlet transform 
         :param show_pysap_plots: if True, displays pySAP plots when calling the decomposition method
