@@ -440,7 +440,7 @@ class KinematicsAPI(object):
         for i, lens_model in enumerate(self._lens_model_list):
             if model_kinematics_bool[i] is True:
                 mass_profile_list.append(lens_model)
-                if lens_model in ["INTERPOL", "INTERPOL_SCLAED"]:
+                if lens_model in ["INTERPOL", "INTERPOL_SCALED"]:
                     center_x_i, center_y_i = self._lensMassProfile.convergence_peak(
                         kwargs_lens,
                         model_bool_list=i,
@@ -469,7 +469,7 @@ class KinematicsAPI(object):
                     "compute the MGE!"
                 )
             r_array = np.logspace(-4, 2, 200) * theta_E
-            if self._lens_model_list[0] in ["INTERPOL", "INTERPOL_SCLAED"]:
+            if self._lens_model_list[0] in ["INTERPOL", "INTERPOL_SCALED"]:
                 center_x, center_y = self._lensMassProfile.convergence_peak(
                     kwargs_lens,
                     model_bool_list=model_kinematics_bool,
